@@ -103,6 +103,12 @@ export async function setKeepDays($: Api, days: number) {
   await change($, list => list)
 }
 
+// Whether note_issue asks before a new issue goes on the list, the same in every project.
+export async function toggleConfirm($: Api) {
+  const next: Settings = await update($, settings, was => ({ ...was, confirm: !was.confirm }))
+  await $.store.set(SETTINGS_KEY, next)
+}
+
 // A new issue at the next number, noted by this session, unless one with the
 // same title, ignoring case, is on the list already: that one is returned.
 export async function addIssue($: Api, fields: Pick<Issue, 'title' | 'detail' | 'file' | 'priority'>) {

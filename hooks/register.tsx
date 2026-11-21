@@ -213,7 +213,8 @@ export const register: Register = (on, options) => {
       return { result: `Added to #${id}.` }
     }
 
-    const near = input.force === true ? [] : similar(await load($), title, file)
+    const current = await load($)
+    const near = input.force === true ? [] : similar(current, title, file)
 
     // The same title is not a near match: addIssue answers it as on the list already.
     if (near.length > 0 && !near.some(i => i.title.toLowerCase() === title.toLowerCase())) {
@@ -222,6 +223,18 @@ export const register: Register = (on, options) => {
         result:
           `Not noted: similar entries are on the list: ${names}. If one is the same problem, call note_issue ` +
           'again with duplicateOf set to its number to add your detail; if it is a different problem, call again with force: true.',
+      }
+    }
+
+    // With consent on in the settings, the user is asked before a new entry; one on the list already is not asked about.
+    if ((await read($, settings)).confirm && !current.some(i => i.title.toLowerCase() === title.toLowerCase())) {
+      const answer = await $.ui
+        .ask(`Add to the Noticely list: "${title}"${file ? ` (${file})` : ''}?`, { options: ['Add', 'Skip'], header: 'Noticely' })
+        .catch(() => undefined)
+
+      if (answer !== 'Add') {
+        const said = answer === undefined ? 'the user did not answer' : answer === 'Skip' ? 'the user declined' : `the user answered "${answer}"`
+        return { result: `Not noted: ${said}.` }
       }
     }
 

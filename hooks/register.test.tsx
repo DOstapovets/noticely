@@ -395,6 +395,40 @@ test('changes made at the same moment in one session all land, each issue at a n
   expect(kept.nextId).toBe(5)
 })
 
+test('with Ask before noting on, a new issue goes on the list only once the user picks Add', async ($, on) => {
+  const seen = engine(on)
+  await $.session.start(start('/proj/a'))
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  await ui.press({ key: 'tab-settings' })
+  expect((await ui.find({ key: 'setting-confirm' }))?.text).toBe('[ ] Ask before noting')
+
+  // Off, the default: nothing is asked.
+  expect((await $.tool.call({ tool: NOTE, title: 'Stale cache' })).result).toMatch(/^Noted as #1/)
+  const before = seen.asked.length
+
+  await ui.press({ key: 'setting-confirm' })
+  expect((await ui.find({ key: 'setting-confirm' }))?.text).toBe('[✓] Ask before noting')
+  expect(seen.store.get('settings')).toEqual({ confirm: true })
+  await ui.unmount()
+
+  seen.choice = 'Skip'
+  expect((await $.tool.call({ tool: NOTE, title: 'Leaked token', file: '.env' })).result).toBe('Not noted: the user declined.')
+  expect(seen.asked.at(-1)).toBe('Add to the Noticely list: "Leaked token" (.env)?')
+  seen.choice = 'Not a bug'
+  expect((await $.tool.call({ tool: NOTE, title: 'Leaked token' })).result).toBe('Not noted: the user answered "Not a bug".')
+  seen.choice = null
+  expect((await $.tool.call({ tool: NOTE, title: 'Leaked token' })).result).toBe('Not noted: the user did not answer.')
+  seen.choice = 'Add'
+  expect((await $.tool.call({ tool: NOTE, title: 'Leaked token' })).result).toMatch(/^Noted as #2/)
+
+  // One on the list already, and detail added to an entry, are not asked about.
+  const asked = seen.asked.length
+  expect((await $.tool.call({ tool: NOTE, title: 'stale cache' })).result).toBe('Already on the list as #1.')
+  expect((await $.tool.call({ tool: NOTE, title: 'x', detail: 'more', duplicateOf: 1 })).result).toBe('Added to #1.')
+  expect(seen.asked.length).toBe(asked)
+  expect(asked - before).toBe(4)
+})
+
 test('the answer under a note_issue or resolve_issue row is green when the list changed, yellow when not', async ($, on) => {
   engine(on)
   // The engine's own result block, which other tools keep.

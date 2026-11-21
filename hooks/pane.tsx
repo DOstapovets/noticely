@@ -9,7 +9,7 @@ import { createGitlabIssue } from './gitlab'
 import { age, arrange, cardColumnsOf, clipRows, DETAIL_LINES, firstCard, FOOT_ROWS, headRows, issueLink, LINK_GAP, PRIORITIES, projectName, pullLink, rank } from './layout'
 import type { CardKind } from './layout'
 import { startFeedback, startSession, whereRun } from './sessions'
-import { change, KEEP_DAYS, loadProjects, setKeepDays, toggleGroup } from './store'
+import { change, KEEP_DAYS, loadProjects, setKeepDays, toggleConfirm, toggleGroup } from './store'
 import { listTodo, scanTodos, startTodoSession, TAG_LABELS, todoIssues, toggleTodos } from './todos'
 
 // The engine's scan reads a `$.state` value only from a const of the file that
@@ -410,7 +410,7 @@ export async function renderPane($: Api, e: PaneRender) {
   // The settings, in place of the groups: how long resolved issues are kept, one choice of a row,
   // then the experimental ones, each a switch with what it does below.
   const chosen: Settings = await read($, settings)
-  const { todos: todosOn, keepDays = KEEP_DAYS } = chosen
+  const { todos: todosOn, confirm: confirmOn, keepDays = KEEP_DAYS } = chosen
   const settingsView = current === 'settings' && (
     <Box key="settings" flexDirection="column" flexShrink={0}>
       <Text bold>Completed</Text>
@@ -426,6 +426,12 @@ export async function renderPane($: Api, e: PaneRender) {
       </Box>
       <Text dimColor wrap="wrap">
         How long a resolved issue, or one closed on GitHub or GitLab, stays on the Completed tab.
+      </Text>
+      <Box marginTop={1}>
+        <Button key="setting-confirm" plain label={`${confirmOn ? '[✓]' : '[ ]'} Ask before noting`} onPress={() => toggleConfirm($)} />
+      </Box>
+      <Text dimColor wrap="wrap">
+        Claude asks you before each new issue goes on the list; Skip leaves it off.
       </Text>
       <Box marginTop={1}>
         <Text bold>Experimental</Text>

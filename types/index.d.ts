@@ -43,6 +43,8 @@ export type Settings = {
   todos?: boolean
   /** How many days a resolved issue stays on the Completed tab; absent is 7, 0 removes it at once. */
   keepDays?: number
+  /** Whether note_issue asks the user before a new issue goes on the list; absent is off. */
+  confirm?: boolean
 }
 
 /** A TODO, FIXME, HACK or XXX comment in the code, as `git grep` last found it: kept for the session only. */

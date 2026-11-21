@@ -120,7 +120,10 @@ every 30 seconds.
 place of the groups, with **← Back** above in place of the tabs. They are the same in every
 project and kept across sessions. **Completed** chooses how long a resolved entry stays
 on the Completed tab: **Off** (it leaves at once), **1 day**, **7 days** (the default) or
-**30 days**; a shorter choice drops the older ones at once. **Experimental** is for
+**30 days**; a shorter choice drops the older ones at once. **[ ] Ask before noting**, off
+until you switch it on, has Claude ask you before each new entry goes on the list: **Add**
+notes it, **Skip** or a dismissed dialog leaves it off, and Claude is told which. An entry on
+the list already, and detail added to one, are not asked about. **Experimental** is for
 what may change or go away in a later version: **[ ] Code tab** switches the Code tab
 below on or off, and is off until you switch it on.
 
