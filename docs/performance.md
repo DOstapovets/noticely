@@ -10,7 +10,7 @@ Measured on Claude Code 2.1.323, on a laptop, on 2026-11-21.
   lists together, up to the 4 MiB the store takes.
 - **Every `$.state` write redraws** each pane and band that read the value, at
   the redraw rate, even when the value is the same as before.
-- **Timers run in every session:** the list is read again every 30 seconds
+- **Timers run in every session:** the list and the settings are read again every 30 seconds
   (`RELOAD_MS`), the other projects and the comments in the code too while their
   tab is open, and GitHub every 5 minutes (`GITHUB_MS`).
 
@@ -23,7 +23,7 @@ each `$.state` write, so they do not depend on the machine's speed:
 | Action | Budget |
 | --- | --- |
 | A reload that finds nothing new | no `$.state` write, on every tab |
-| A reload | 1 read of the list; with Projects open, 1 more for each other project |
+| A reload | 1 read of the list and 1 of the settings; with Projects open, 1 more for each other project |
 | `resolve_issue`, a press in the pane | 1 read and 1 write of the list |
 | `note_issue` | 2 reads (near duplicates, then the add) and 1 write |
 | A GitHub pass | 1 `gh api graphql` per 25 linked issues, one host a query; no pass while one runs |

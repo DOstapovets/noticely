@@ -118,7 +118,7 @@ every 30 seconds.
 
 **Settings.** **⚙ Settings**, in the footer's secondary color, shows the settings in
 place of the groups, with **← Back** above in place of the tabs. They are the same in every
-project and kept across sessions. **Completed** chooses how long a resolved entry stays
+project and kept across sessions; other open sessions pick a change up within 30 seconds. **Completed** chooses how long a resolved entry stays
 on the Completed tab: **Off** (it leaves at once), **1 day**, **7 days** (the default) or
 **30 days**; a shorter choice drops the older ones at once. **[ ] Ask before noting**, off
 until you switch it on, has Claude ask you before each new entry goes on the list: **Add**

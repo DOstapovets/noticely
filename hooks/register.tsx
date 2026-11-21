@@ -138,6 +138,13 @@ export const register: Register = (on, options) => {
     // The other projects, and the comments in the code, are read again only while their tab is open:
     // pressing it, and `/noticely`, read them too.
     $.clock.every(RELOAD_MS, async () => {
+      // The settings first, as at the start: another session may have changed them.
+      const now = ((await $.store.get(SETTINGS_KEY)) as Settings | undefined) ?? {}
+      const was = await read($, settings)
+      if (JSON.stringify(now) !== JSON.stringify(was)) {
+        await update($, settings, () => now)
+        if (!now.todos !== !was.todos) void scanTodos($)
+      }
       await load($)
       const open = await read($, tab)
       if (open === 'projects') await loadProjects($)

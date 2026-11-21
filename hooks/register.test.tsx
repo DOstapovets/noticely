@@ -429,6 +429,18 @@ test('with Ask before noting on, a new issue goes on the list only once the user
   expect(asked - before).toBe(4)
 })
 
+test('a setting changed in another session is picked up at the next reload', async ($, on) => {
+  const seen = engine(on)
+  await $.session.start(start('/proj/a'))
+  expect((await $.tool.call({ tool: NOTE, title: 'Stale cache' })).result).toMatch(/^Noted as #1/)
+
+  // Another session switches Ask before noting on.
+  seen.store.set('settings', { confirm: true })
+  await seen.clock.advance(30_000)
+  seen.choice = 'Skip'
+  expect((await $.tool.call({ tool: NOTE, title: 'Leaked token' })).result).toBe('Not noted: the user declined.')
+})
+
 test('the answer under a note_issue or resolve_issue row is green when the list changed, yellow when not', async ($, on) => {
   engine(on)
   // The engine's own result block, which other tools keep.
@@ -1979,7 +1991,7 @@ test('a reload that finds nothing new writes nothing, so nothing is drawn again'
   await ui.unmount()
 })
 
-test('each reload reads the list once, and every other project only while their tab is open', async ($, on) => {
+test('each reload reads the list and the settings once, and every other project only while their tab is open', async ($, on) => {
   const others = Object.fromEntries(
     Array.from({ length: 20 }, (_, i) => [`issues:/proj/o${i}`, { nextId: 2, items: [{ id: 1, title: `In ${i}`, createdAt: 1 }] }]),
   )
@@ -1992,15 +2004,15 @@ test('each reload reads the list once, and every other project only while their 
   const reads = () => Object.values(seen.calls.get).reduce((a, b) => a + b, 0)
   let was = reads()
   await seen.clock.advance(30_000)
-  expect(reads() - was).toBe(1)
+  expect(reads() - was).toBe(2)
   expect(seen.calls.get['issues:/proj/o0']).toBe(1)
 
-  // The Projects tab: the list, then each of the 20 others once a reload.
+  // The Projects tab: the list and the settings, then each of the 20 others once a reload.
   await ui.press({ key: 'tab-projects' })
   await seen.clock.settle()
   was = reads()
   await seen.clock.advance(30_000)
-  expect(reads() - was).toBe(1 + 20)
+  expect(reads() - was).toBe(2 + 20)
   await ui.unmount()
 })
 
