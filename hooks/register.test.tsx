@@ -485,11 +485,14 @@ test('the Completed tab keeps a resolved issue for the days chosen in Settings, 
   await ui.press({ key: 'setting-keep-1' })
   expect(seen.store.get('settings')).toEqual({ keepDays: 1 })
   expect((await ui.find({ key: 'setting-keep-1' }))?.text).toBe('(•) 1 day')
-  expect((await ui.find({ key: 'tab-completed' }))?.text.trim()).toBe('✓ Completed 1')
   expect(seen.store.get('issues:/proj/a').done.map((i: { id: number }) => i.id)).toEqual([1])
+  await ui.press({ key: 'tab-back' })
+  expect((await ui.find({ key: 'tab-completed' }))?.text.trim()).toBe('✓ Completed 1')
 
   // Off: what was kept goes, and a resolved issue leaves at once, as before.
+  await ui.press({ key: 'tab-settings' })
   await ui.press({ key: 'setting-keep-0' })
+  await ui.press({ key: 'tab-back' })
   expect(await ui.find({ key: 'tab-completed' })).toBeUndefined()
   await $.tool.call({ tool: NOTE, title: 'Dead link in README' })
   await $.tool.call({ tool: RESOLVE, id: 5 })
@@ -1847,20 +1850,21 @@ test('the experimental Code tab is off until switched on in Settings, beside Fee
   expect((await ui.find({ key: 'footer' }))?.text).toMatch(/ ⚙ Settings  ✎ Feedback $/)
   expect((await ui.find({ type: 'Text', text: ' ⚙ Settings ' }))?.props.color).toBe('subtle')
 
-  // Settings take the groups' place, under the tabs, which lead back.
+  // Settings take the groups' place, under ← Back in the tabs' place.
   await ui.press({ key: 'tab-settings' })
   expect((await ui.find({ type: 'Text', text: ' ⚙ Settings ' }))?.props.backgroundColor).toBe('subtle')
   expect(await ui.find({ type: 'Text', text: 'Experimental' })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: 'Nothing noticed in this project.' })).toBeUndefined()
   expect((await ui.find({ key: 'setting-todos' }))?.text).toBe('[ ] Code tab')
-  expect(await ui.find({ key: 'tab-all' })).toBeDefined()
+  expect(await ui.find({ key: 'tab-all' })).toBeUndefined()
+  expect((await ui.find({ key: 'tab-back' }))?.text).toBe('← Back')
 
   // On: the comments are read at once, and the choice is kept for every project.
   await ui.press({ key: 'setting-todos' })
   expect((await ui.find({ key: 'setting-todos' }))?.text).toBe('[✓] Code tab')
   expect(seen.store.get('settings')).toEqual({ todos: true })
+  await ui.press({ key: 'tab-back' })
   expect((await ui.find({ key: 'tab-code' }))?.text.trim()).toBe('Code 3')
-  await ui.press({ key: 'tab-all' })
   expect(await ui.find({ type: 'Text', text: 'Experimental' })).toBeUndefined()
   expect(await ui.find({ type: 'Text', text: 'Nothing noticed in this project.' })).toBeDefined()
   await ui.unmount()
@@ -1930,7 +1934,7 @@ test('a reload that finds nothing new writes nothing, so nothing is drawn again'
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
   await seen.clock.settle()
 
-  for (const tab of ['tab-all', 'tab-projects', 'tab-code']) {
+  for (const tab of ['tab-all', 'tab-projects', 'tab-back', 'tab-code']) {
     await ui.press({ key: tab })
     await seen.clock.settle()
     Object.assign(seen.written, zero(seen.written))

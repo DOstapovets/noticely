@@ -74,7 +74,7 @@ async function shiftPriority($: Api, id: number, step: -1 | 1) {
 // while this session has noted something, the resolved ones still kept on theirs,
 // or on the Projects tab, offered while another project has a list, the issues of
 // the project open there. The settings
-// list none, and show the tabs, which lead back.
+// list none, and show ← Back, which leads to every issue.
 export async function view($: Api) {
   const list = await read($, issues)
   const done = await read($, completed)
@@ -106,7 +106,9 @@ export async function view($: Api) {
               : list
   const kind: CardKind = opened ? 'readOnly' : current === 'completed' ? 'done' : current === 'code' ? 'code' : 'own'
 
-  const hasTabs = mine.length > 0 || done.length > 0 || found.length > 0 || current === 'settings'
+  // The settings and the list of projects show ← Back in the tabs' place; another project open shows ← Projects instead.
+  const isApart = current === 'settings' || current === 'projects'
+  const hasTabs = isApart ? !opened : mine.length > 0 || done.length > 0 || found.length > 0
 
   return { list, mine, done, others, todos: found, hasTabs, current, opened, shown, kind }
 }
@@ -651,7 +653,21 @@ export async function renderPane($: Api, e: PaneRender) {
           <Text bold>Noticely</Text>
         </Box>
       )}
-      {hasTabs && <Box marginBottom={1}>{tabs}</Box>}
+      {hasTabs && (
+        <Box marginBottom={1}>
+          {current === 'settings' || current === 'projects' ? (
+            <Button
+              key="tab-back"
+              plain
+              {...(colorlessButtons ? { dimColor: true } : {})}
+              label="← Back"
+              onPress={() => chooseTab($, 'all')}
+            />
+          ) : (
+            tabs
+          )}
+        </Box>
+      )}
       {(current === 'all' || current === 'session') && list.length === 0 && <Text dimColor>Nothing noticed in this project.</Text>}
       {listsProjects &&
         projectRow(

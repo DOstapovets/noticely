@@ -104,7 +104,8 @@ which pushes it down only once the list is longer than the pane.
 
 **Other projects.** Once another project has a list too, a **Projects** tab stands in
 the footer, in a secondary color, also when this project's list is
-empty (open the pane with `/noticely`). It
+empty (open the pane with `/noticely`). In place of the tabs it shows **← Back**,
+which leads to every entry of this project. It
 lists this project first, in the accent color and marked `this project` (pressing it
 leads back to its own list), then every other project the plugin has kept a list for, one row each, a blank row apart: its name
 (`owner/repo` from its `origin` remote, else its directory's name), its directory, how many entries
@@ -116,7 +117,7 @@ leads back to the list. The list is read again each time the tab is pressed, on 
 every 30 seconds.
 
 **Settings.** **⚙ Settings**, in the footer's secondary color, shows the settings in
-place of the groups, with the tabs above to lead back. They are the same in every
+place of the groups, with **← Back** above in place of the tabs. They are the same in every
 project and kept across sessions. **Completed** chooses how long a resolved entry stays
 on the Completed tab: **Off** (it leaves at once), **1 day**, **7 days** (the default) or
 **30 days**; a shorter choice drops the older ones at once. **Experimental** is for
