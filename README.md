@@ -7,7 +7,7 @@ Noticely is a Claude Code plugin that keeps a per-project list of problems Claud
 secret, broken config, a failing check, stale docs. Instead of getting lost in the
 conversation, each finding goes on a list that survives across sessions, grouped by
 priority. From any entry you can start a background session to fix it, or file a
-GitHub issue and follow its status.
+GitHub or GitLab issue and follow its status.
 
 <p align="center"><img src="docs/assets/demo.gif" alt="Claude notes a leaked webhook secret while upgrading stripe; /noticely opens the pane, ▶ New session fixes it in the background, and the entry leaves the list once resolved." width="100%"></p>
 
@@ -68,7 +68,7 @@ many cards are above, `▾ High 5 ↑ 2 above`. Which groups are folded is remem
 sessions and projects. Once the current session has noted something, two tabs sit at
 the top of the pane, **This session 2** and **All 5**: the first shows only the entries
 this session noted. The tab goes away again when none of them are left, and the pane
-then shows every entry. Once an entry is resolved, or closed on GitHub, a **✓ Completed 3**
+then shows every entry. Once an entry is resolved, or closed on GitHub or GitLab, a **✓ Completed 3**
 tab follows **All**: its cards are read only and say, at the top right, when the entry was
 resolved, `✓ 2h ago`. They stay there for the days chosen in **⚙ Settings**, 7 at first.
 An entry deleted with ✕ does not go there. Within a group the newest entry comes first. Each entry is a card with its number and
@@ -86,6 +86,9 @@ three lines. A blank row above them, these are its controls:
   then links it on a line under the detail, with a blank row above:
   `↗ Issue #42 (open · 📋 To do)`, with the column of the project board it is on, if any.
   Shown only where GitHub is on: see [Settings](#settings).
+- **↗ GitLab issue** does the same with `glab issue create` in the project of the
+  session's directory, and links it as `↗ Issue #42 (open)`: see
+  [GitLab status](#gitlab-status). Shown only where GitLab is on.
 - **⎘ Copy** puts the entry on the clipboard to paste into a prompt: `#3` and the
   title, then `Where:` and the file, then the detail whole. A toast says it was copied,
   or why not.
@@ -213,10 +216,32 @@ Requires the [GitHub CLI](https://cli.github.com), signed in with `gh auth login
 and for the project board column the `read:project` scope
 (`gh auth refresh -s read:project`).
 
+## GitLab status
+
+GitLab works the same way, through `glab api graphql` on the issue's host, on the
+same schedule: at session start, right after the issue is filed, on `/noticely`, and
+every 5 minutes after that, once in 5 minutes per repository. Projects in subgroups
+(`group/sub/project`) are supported.
+
+- The card shows whether the issue is open, `↗ Issue #42 (open)`. GitLab has no
+  Status column like GitHub's project boards, so none is shown.
+- The **merge request** a background session opened is found by the same
+  `Noticely issue #3 (noticed …)` line, which the session is asked to end its
+  description with, followed by `Closes <issue URL>`. The card shows it as
+  `⎇ MR !12 (draft)`, then `open`, `merged` or `closed`. A merge request opened by hand
+  that closes the issue is not looked up.
+- When the GitLab issue is **closed**, the entry moves to the Completed tab and a toast
+  says `✓ closed on GitLab, completed: #1`.
+- When GitLab refuses a query as over its rate limit (`429`), no session of the
+  repository asks again for 15 minutes.
+
+Requires the [GitLab CLI](https://gitlab.com/gitlab-org/cli), signed in with
+`glab auth login` (with `--hostname` for a self-managed instance).
+
 ## Settings
 
-One option, `github`, asked for at install and listed in the plugin's config menu
-(stored under `pluginConfigs` in settings):
+Two options, `github` and `gitlab`, asked for at install and listed in the plugin's
+config menu (stored under `pluginConfigs` in settings):
 
 | Value | GitHub button and statuses |
 | --- | --- |
@@ -224,8 +249,14 @@ One option, `github`, asked for at install and listed in the plugin's config men
 | `on` | Always. Use it for GitHub Enterprise on a domain of its own. |
 | `off` | Never. |
 
-Where GitHub is off, no `gh` call is made. Links to issues filed earlier stay on
-their cards.
+| Value | GitLab button and statuses |
+| --- | --- |
+| `auto` (default) | Only where the repository's `origin` remote is on `gitlab.com`, or on a host whose name starts with `gitlab.` (`gitlab.example.com`), over ssh or https. |
+| `on` | Always. Use it for a self-managed GitLab on a host named otherwise. |
+| `off` | Never. |
+
+Where GitHub is off, no `gh` call is made, and where GitLab is off, no `glab` call.
+Links to issues filed earlier stay on their cards.
 
 ## Where the list is kept
 
@@ -261,8 +292,8 @@ claude --plugin-dir .         # a session with this checkout loaded
 
 | File | What is in it |
 | --- | --- |
-| `hooks/register.tsx` | The hooks module: tools, `/noticely`, the count, and the files it imports for the store, GitHub, background sessions, layout and the pane (listed in [AGENTS.md](./AGENTS.md#layout)). |
-| `hooks/*.test.ts(x)` | Tests on `claude-code/testing`, with `gh`, `git` and `claude --bg` stubbed. |
+| `hooks/register.tsx` | The hooks module: tools, `/noticely`, the count, and the files it imports for the store, GitHub, GitLab, background sessions, layout and the pane (listed in [AGENTS.md](./AGENTS.md#layout)). |
+| `hooks/*.test.ts(x)` | Tests on `claude-code/testing`, with `gh`, `glab`, `git` and `claude --bg` stubbed. |
 | `types/index.d.ts` | The `Issue`, `Priority`, `GithubStatus`, `Pull`, `GithubChecked`, `Stored`, `Rule`, `Project` and `Settings` types and the `$.state` contract. |
 
 How to work on it, for people and agents alike, is in [AGENTS.md](./AGENTS.md); branch,

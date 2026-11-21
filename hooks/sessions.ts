@@ -19,10 +19,11 @@ const prompt = (issue: Issue) =>
     issue.file && `Where: ${issue.file}`,
     issue.detail && `Detail: ${issue.detail}`,
     issue.githubUrl && `GitHub issue: ${issue.githubUrl}`,
+    issue.gitlabUrl && `GitLab issue: ${issue.gitlabUrl}`,
     `When it is fixed, call resolve_issue with id ${issue.id}.`,
-    // The marker lets the pane find the pull request; `Closes` links it to the GitHub issue as well.
-    `If you open a pull request for it, end its description with the line "${pullMarker(issue)}"` +
-      (issue.githubUrl ? ` and a line "Closes ${issue.githubUrl}".` : '.'),
+    // The marker lets the pane find the pull request; `Closes` links it to the GitHub or GitLab issue as well.
+    `If you open a ${session.gitlab && !session.github ? 'merge request' : 'pull request'} for it, end its description with the line "${pullMarker(issue)}"` +
+      (issue.githubUrl || issue.gitlabUrl ? ` and a line "Closes ${issue.githubUrl ?? issue.gitlabUrl}".` : '.'),
   ]
     .filter(Boolean)
     .join('\n')

@@ -144,8 +144,9 @@ export const issueLink = (url: string, github?: GithubStatus) => ({
   label: `↗ Issue #${url.split('/').pop()}`,
   status: github ? ` (open${github.board ? ` · ${github.board}` : ''})` : '',
 })
+// A GitLab merge request is `!12`, as GitLab writes it.
 export const pullLink = (pull: Pull) => ({
-  label: `⎇ PR #${pull.number}`,
+  label: pull.url.includes('/-/merge_requests/') ? `⎇ MR !${pull.number}` : `⎇ PR #${pull.number}`,
   status: ` (${pull.state === 'MERGED' ? 'merged' : pull.state === 'CLOSED' ? 'closed' : pull.isDraft ? 'draft' : 'open'})`,
 })
 // Columns between the two links on their line.
@@ -155,6 +156,7 @@ export const LINK_GAP = 3
 const linkRows = (issue: Issue, columns: number) => {
   const texts = [
     issue.githubUrl && issueLink(issue.githubUrl, issue.github),
+    issue.gitlabUrl && issueLink(issue.gitlabUrl, issue.gitlab),
     issue.pull && pullLink(issue.pull),
   ].flatMap(link => (link ? [link.label + link.status] : []))
 

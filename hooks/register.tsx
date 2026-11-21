@@ -5,6 +5,7 @@ import type { Priority, Rule, Settings } from '../types'
 import { MINUTE, session } from './context'
 import type { Api } from './context'
 import { GITHUB_MS, onGithub, refreshGithub } from './github'
+import { onGitlab, refreshGitlab } from './gitlab'
 import { arrange, cardColumnsOf, clip, count, firstCard, FOOT_ROWS, headRows, LIMITS, PRIORITIES, rank } from './layout'
 import { renderPane, view } from './pane'
 import { offerSetup, startFeedback, startSetup, whereRun } from './sessions'
@@ -51,6 +52,7 @@ export const register: Register = (on, options) => {
     session.ruleKey = `rule:${repo?.root ?? session.cwd}`
     session.remote = repo?.remote ?? undefined
     session.github = options.github === 'on' || (options.github !== 'off' && onGithub(repo?.remote))
+    session.gitlab = options.gitlab === 'on' || (options.gitlab !== 'off' && onGitlab(repo?.remote))
     session.nextId = 1
 
     await adoptOldStore($)
@@ -141,8 +143,12 @@ export const register: Register = (on, options) => {
       if (open === 'projects') await loadProjects($)
       if (open === 'code') await scanTodos($)
     })
-    $.clock.every(GITHUB_MS, () => void refreshGithub($))
+    $.clock.every(GITHUB_MS, () => {
+      void refreshGithub($)
+      void refreshGitlab($)
+    })
     void refreshGithub($)
+    void refreshGitlab($)
 
     if (list.length > 0) {
       void openPane($)
@@ -315,6 +321,7 @@ export const register: Register = (on, options) => {
     await loadProjects($)
     await scanTodos($)
     void refreshGithub($, true)
+    void refreshGitlab($, true)
     const opened = await openPane($)
 
     if (opened.isPlaced) {

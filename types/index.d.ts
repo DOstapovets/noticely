@@ -14,13 +14,17 @@ export type Issue = {
   githubUrl?: string
   /** That GitHub issue's status, as GitHub last reported it; once it is closed the issue is removed. */
   github?: GithubStatus
+  /** The GitLab issue created for it from the pane, if any. */
+  gitlabUrl?: string
+  /** That GitLab issue's state, as GitLab last reported it; once it is closed the issue is removed. */
+  gitlab?: GithubStatus
   /** When it was resolved, or closed on GitHub: set only on an issue kept on the Completed tab. */
   resolvedAt?: number
-  /** The pull request for it: one that closes its GitHub issue, or one its session marked; absent until one is found. */
+  /** The pull request for it: one that closes its GitHub issue, or one its session marked (on GitLab, the merge request); absent until one is found. */
   pull?: Pull
 }
 
-/** A pull request as GitHub last reported it. */
+/** A pull request as GitHub last reported it, or a merge request as GitLab did: its `url` tells which. */
 export type Pull = {
   number: number
   url: string
@@ -69,7 +73,7 @@ export type Stored = {
   updatedAt?: number
 }
 
-/** What `$.store` keeps per repository under `github:<root>`, shared by its sessions: when GitHub was last asked about its list, and until when it is not asked, as its rate limit ran low. */
+/** What `$.store` keeps per repository under `github:<root>`, and for GitLab under `gitlab:<root>`, shared by its sessions: when GitHub was last asked about its list, and until when it is not asked, as its rate limit ran low. */
 export type GithubChecked = {
   checkedAt?: number
   pausedUntil?: number

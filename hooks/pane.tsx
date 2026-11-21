@@ -5,6 +5,7 @@ import type { Issue, Priority, Project, Settings, Tab } from '../types'
 import { session } from './context'
 import type { Api } from './context'
 import { createGithubIssue } from './github'
+import { createGitlabIssue } from './gitlab'
 import { age, arrange, cardColumnsOf, clipRows, DETAIL_LINES, firstCard, FOOT_ROWS, headRows, issueLink, LINK_GAP, PRIORITIES, projectName, pullLink, rank } from './layout'
 import type { CardKind } from './layout'
 import { startFeedback, startSession, whereRun } from './sessions'
@@ -264,13 +265,19 @@ export async function renderPane($: Api, e: PaneRender) {
           </Text>
         </Box>
       )}
-      {/* The GitHub issue and its pull request on one line, a line each where both do not fit. */}
-      {(issue.githubUrl || issue.pull) && (
+      {/* The GitHub or GitLab issue and its pull request on one line, a line each where they do not fit. */}
+      {(issue.githubUrl || issue.gitlabUrl || issue.pull) && (
         <Box key={`links-${issue.id}`} marginTop={1} flexWrap="wrap" columnGap={LINK_GAP}>
           {issue.githubUrl && (
             <Box flexShrink={0}>
               <Link href={issue.githubUrl} label={issueLink(issue.githubUrl).label} />
               {issue.github && <Text color="success">{issueLink(issue.githubUrl, issue.github).status}</Text>}
+            </Box>
+          )}
+          {issue.gitlabUrl && (
+            <Box key={`gitlab-link-${issue.id}`} flexShrink={0}>
+              <Link href={issue.gitlabUrl} label={issueLink(issue.gitlabUrl).label} />
+              {issue.gitlab && <Text color="success">{issueLink(issue.gitlabUrl, issue.gitlab).status}</Text>}
             </Box>
           )}
           {issue.pull && (
@@ -307,6 +314,13 @@ export async function renderPane($: Api, e: PaneRender) {
                 key={`github-${issue.id}`}
                 label="↗ GitHub issue"
                 onPress={() => createGithubIssue($, issue.id)}
+              />
+            )}
+            {session.gitlab && !issue.gitlabUrl && (
+              <Button
+                key={`gitlab-${issue.id}`}
+                label="↗ GitLab issue"
+                onPress={() => createGitlabIssue($, issue.id)}
               />
             )}
             <Button key={`copy-${issue.id}`} label="⎘ Copy" onPress={press => copyIssue($, issue, press.surface)} />
@@ -409,7 +423,7 @@ export async function renderPane($: Api, e: PaneRender) {
         ))}
       </Box>
       <Text dimColor wrap="wrap">
-        How long a resolved issue, or one closed on GitHub, stays on the Completed tab.
+        How long a resolved issue, or one closed on GitHub or GitLab, stays on the Completed tab.
       </Text>
       <Box marginTop={1}>
         <Text bold>Experimental</Text>

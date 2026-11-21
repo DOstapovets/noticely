@@ -57,22 +57,22 @@ export async function createGithubIssue($: Api, id: number) {
 // How often a repository's list is read on GitHub, by whichever of its sessions comes first.
 export const GITHUB_MS = 5 * 60_000
 // A pass due within this much is made now: the sessions' timers do not tick together.
-const SLACK = 30_000
+export const SLACK = 30_000
 // Issues asked about in one query: each query costs one point of the 5000 an hour.
 const BATCH = 25
 // Below this many points left, passes wait for the hour to reset, so the rest of gh keeps some.
 const RESERVE = 200
 // How long passes wait after GitHub refused one as over its rate limit.
-const RATE_PAUSE_MS = 3 * GITHUB_MS
+export const RATE_PAUSE_MS = 3 * GITHUB_MS
 
 // The line a fix session ends its pull request's description with, so a pass finds it.
 export const pullMarker = (issue: Issue) => `Noticely issue #${issue.id} (noticed ${issue.createdAt})`
-const MARKER = /Noticely issue #(\d+) \(noticed (-?\d+)\)/g
+export const MARKER = /Noticely issue #(\d+) \(noticed (-?\d+)\)/g
 
 // One pass at a time: the timer, `/noticely` and a new issue may all ask for one.
 let refreshing = false
 
-const parse = (json: string): unknown => {
+export const parse = (json: string): unknown => {
   try {
     return JSON.parse(json)
   } catch {
@@ -108,13 +108,13 @@ const pullOf = (node: unknown): Pull | undefined => {
 }
 
 // An open one first, then a merged one, then the newest.
-const better = (a: Pull | undefined, b: Pull) => {
+export const better = (a: Pull | undefined, b: Pull) => {
   const order = { OPEN: 0, MERGED: 1, CLOSED: 2 }
   return !a || order[b.state] < order[a.state] || (order[b.state] === order[a.state] && b.number > a.number) ? b : a
 }
 
 // What one pass learnt: each issue's status and pull request, and until when GitHub is not to be asked.
-type Found = { statuses: Map<number, GithubStatus>; pulls: Map<number, Pull>; pausedUntil?: number }
+export type Found = { statuses: Map<number, GithubStatus>; pulls: Map<number, Pull>; pausedUntil?: number }
 
 // The queries of one pass: each host's linked issues, BATCH a query, and with the
 // first of the repository's own host the search for pull requests its sessions marked.

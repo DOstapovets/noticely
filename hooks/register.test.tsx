@@ -82,6 +82,11 @@ const engine = (on: On, stored?: Record<string, unknown>) => {
     viewHold: undefined as Promise<void> | undefined,
     rate: { remaining: 5000, resetAt: '2026-11-21T13:00:00Z' } as { remaining: number; resetAt: string },
     marked: [] as unknown[],
+    // What GitLab answers for each linked issue, its `state`; a function answers per URL. Each
+    // `glab api graphql` query with its host, and the merge requests the search for marked ones finds.
+    gitlab: 'opened' as unknown,
+    gitlabQueries: [] as { host: string; query: string }[],
+    mergeRequests: [] as unknown[],
     // What `session.id` answers.
     session: 'session-a',
     // What `session.surfaces` answers.
@@ -177,6 +182,21 @@ const engine = (on: On, stored?: Record<string, unknown>) => {
       seen.argv.push(e.argv)
       return { value: { exitCode: 1, stdout: '', stderr: seen.fail, isStdoutTruncated: false, isStderrTruncated: false } }
     }
+    if (e.argv[0] === 'glab' && e.argv[1] === 'api') {
+      const host = e.argv[e.argv.indexOf('--hostname') + 1] ?? ''
+      const query = e.argv.find(arg => arg.startsWith('query='))?.slice('query='.length) ?? ''
+      seen.gitlabQueries.push({ host, query })
+      const data: Record<string, unknown> = {}
+      for (const [, alias, path, iid] of query.matchAll(/(i\d+): project\(fullPath: "([^"]+)"\) \{ issue\(iid: "(\d+)"\)/g)) {
+        const url = `https://${host}/${path}/-/issues/${iid}`
+        seen.viewed.push(url)
+        data[alias!] = { issue: { state: typeof seen.gitlab === 'function' ? seen.gitlab(url) : seen.gitlab } }
+      }
+      if (query.includes('marked: project')) data.marked = { mergeRequests: { nodes: seen.mergeRequests } }
+      return {
+        value: { exitCode: 0, stdout: JSON.stringify({ data }), stderr: '', isStdoutTruncated: false, isStderrTruncated: false },
+      }
+    }
     if (e.argv[0] === 'gh' && e.argv[1] === 'api') {
       const host = e.argv[e.argv.indexOf('--hostname') + 1] ?? ''
       const query = e.argv.find(arg => arg.startsWith('query='))?.slice('query='.length) ?? ''
@@ -215,7 +235,9 @@ const engine = (on: On, stored?: Record<string, unknown>) => {
         stdout:
           e.argv[0] === 'gh'
             ? 'Creating issue in o/r\n\nhttps://github.com/o/r/issues/42\n'
-            : 'Started background session 4b7cb777\n',
+            : e.argv[0] === 'glab'
+              ? '- Creating issue in g/p\n#42 Title (just now)\n https://gitlab.com/g/p/-/issues/42\n'
+              : 'Started background session 4b7cb777\n',
         stderr: '',
         isStdoutTruncated: false,
         isStderrTruncated: false,
@@ -763,6 +785,113 @@ test('github: off hides it even on github.com', { options: { github: 'off' } }, 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
   expect(await ui.find({ key: 'github-2' })).toBeUndefined()
   await ui.unmount()
+})
+
+const GITLAB_ON = { options: { gitlab: 'on' } }
+
+test('a GitLab issue is created for an issue', GITLAB_ON, async ($, on) => {
+  const seen = engine(on)
+  await $.session.start(start('/proj/a'))
+  await $.tool.call({ tool: NOTE, title: 'Stale cache', detail: 'cache is 2 GB', file: '~/.cache' })
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  // GitHub stays off outside github.com: only the GitLab button.
+  expect(await ui.find({ key: 'github-1' })).toBeUndefined()
+  await ui.press({ key: 'gitlab-1' })
+  expect(seen.argv[0]?.slice(0, 5)).toEqual(['glab', 'issue', 'create', '--title', 'Stale cache'])
+  expect(seen.argv[0]?.[6]).toContain('cache is 2 GB')
+  expect(seen.argv[0]?.at(-1)).toBe('--yes')
+  expect(seen.toasts.at(-1)).toContain('https://gitlab.com/g/p/-/issues/42')
+  await ui.unmount()
+
+  const after = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  expect(await after.find({ key: 'gitlab-1' })).toBeUndefined()
+  expect(await after.find({ type: 'Link', text: /↗ Issue #42/ })).toBeDefined()
+  await after.press({ key: 'session-1' })
+  await after.unmount()
+  const prompt = seen.argv.at(-1)?.[2]
+  expect(prompt).toContain('GitLab issue: https://gitlab.com/g/p/-/issues/42')
+  expect(prompt).toContain('If you open a merge request')
+  expect(prompt).toContain('Closes https://gitlab.com/g/p/-/issues/42')
+})
+
+test('a GitLab issue\'s state and marked merge request are shown, and a closed one is completed', GITLAB_ON, async ($, on) => {
+  const seen = engine(on, {
+    'issues:/repo': {
+      nextId: 4,
+      items: [
+        { id: 1, title: 'Linked', createdAt: 1, gitlabUrl: 'https://gitlab.example.com/g/sub/p/-/issues/7' },
+        { id: 2, title: 'Working', createdAt: 5, sessionId: 's2' },
+        { id: 3, title: 'Linked too', createdAt: 1, gitlabUrl: 'https://gitlab.example.com/g/sub/p/-/issues/8' },
+      ],
+    },
+  })
+  seen.repo = '/repo'
+  seen.remote = 'git@gitlab.example.com:g/sub/p.git'
+  seen.mergeRequests = [
+    { iid: '20', webUrl: 'https://gitlab.example.com/g/sub/p/-/merge_requests/20', state: 'merged', draft: false, description: 'Noticely issue #2 (noticed 5)' },
+    { iid: '21', webUrl: 'https://gitlab.example.com/g/sub/p/-/merge_requests/21', state: 'opened', draft: true, description: 'Noticely issue #2 (noticed 6)' },
+  ]
+  await $.session.start(start('/repo'))
+  await seen.clock.settle()
+  // Asked on the issues' host, subgroups kept in the path; gh is not asked.
+  expect(seen.gitlabQueries.map(q => q.host)).toEqual(['gitlab.example.com'])
+  expect(seen.queries).toEqual([])
+  expect(seen.viewed).toEqual(['https://gitlab.example.com/g/sub/p/-/issues/7', 'https://gitlab.example.com/g/sub/p/-/issues/8'])
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  expect((await ui.find({ key: 'links-1' }))?.text).toMatch(/^↗ Issue #7 \(open\)/)
+  // Only the one marked for this very issue, noticed at 5.
+  expect((await ui.find({ key: 'pull-2' }))?.text).toBe('⎇ MR !20 (merged)')
+  await ui.unmount()
+
+  seen.gitlab = (url: string) => (url.endsWith('/7') ? 'closed' : 'opened')
+  await seen.clock.advance(5 * 60_000)
+  expect(await flag($)).toBe('⚑ 2 issues')
+  expect(seen.toasts.at(-1)).toBe('✓ closed on GitLab, completed: #1')
+  expect(seen.store.get('issues:/repo').done.map((i: { id: number }) => i.id)).toEqual([1])
+})
+
+test('glab rate limited changes nothing, and passes wait before they ask again', GITLAB_ON, async ($, on) => {
+  const linked = { id: 1, title: 'Linked', createdAt: 1, gitlabUrl: 'https://gitlab.com/g/p/-/issues/7', gitlab: { state: 'OPEN' } }
+  const seen = engine(on, { 'issues:/proj/a': { nextId: 2, items: [linked] } })
+  seen.fail = 'glab: 429 Too Many Requests'
+  await $.session.start(start('/proj/a'))
+  await seen.clock.settle()
+  expect(seen.store.get('issues:/proj/a').items[0]).toEqual(linked)
+  expect(seen.store.get('gitlab:/proj/a').pausedUntil).toBeGreaterThan(1_000)
+
+  seen.fail = null
+  seen.gitlab = 'closed'
+  await seen.clock.advance(5 * 60_000)
+  expect(seen.gitlabQueries).toEqual([])
+  await seen.clock.advance(10 * 60_000)
+  expect(seen.store.get('issues:/proj/a').done.map((i: { id: number }) => i.id)).toEqual([1])
+})
+
+test('auto offers GitLab only where origin is on gitlab.com or a gitlab.<domain> host', async ($, on) => {
+  const seen = engine(on, { 'issues:/repo': { nextId: 2, items: [{ id: 1, title: 'Not linked', createdAt: 1 }] } })
+  seen.repo = '/repo'
+  const offered = async () => {
+    const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+    const button = await ui.find({ key: 'gitlab-1' })
+    await ui.unmount()
+    return button !== undefined
+  }
+
+  for (const remote of ['git@gitlab.com:g/p.git', 'https://gitlab.example.com/g/sub/p', 'ssh://git@gitlab.example.com:2222/g/p.git']) {
+    seen.remote = remote
+    await $.session.start(start('/repo'))
+    expect(await offered()).toBe(true)
+  }
+
+  for (const remote of ['git@github.com:o/r.git', 'https://example.com/gitlab/p', null]) {
+    seen.remote = remote
+    await $.session.start(start('/repo'))
+    await seen.clock.settle()
+    expect(await offered()).toBe(false)
+  }
+  // Nor is glab asked where GitLab is not on.
+  expect(seen.gitlabQueries).toEqual([])
 })
 
 test('issues are grouped by priority, highest first, and moved between groups', async ($, on) => {

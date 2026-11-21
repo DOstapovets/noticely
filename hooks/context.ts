@@ -16,6 +16,8 @@ export const session = {
   remote: undefined as string | undefined,
   // Whether this session offers GitHub issues and reads their status.
   github: false,
+  // Whether this session offers GitLab issues and reads their state.
+  gitlab: false,
   // Whether the last `git grep` found more comments than the Code tab holds.
   todosCut: false,
   // The pane's width as last drawn: `ui.scroll` does not carry it.
