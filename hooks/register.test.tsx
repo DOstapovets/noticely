@@ -787,6 +787,16 @@ test('github: off hides it even on github.com', { options: { github: 'off' } }, 
   await ui.unmount()
 })
 
+test('the pane\'s title carries no count: the All tab and the groups say how many', async ($, on) => {
+  engine(on)
+  await $.session.start(start('/proj/a'))
+  await $.tool.call({ tool: NOTE, title: 'Stale doc' })
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  expect(await ui.find({ type: 'Text', text: 'Noticely' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /^Noticely \d/ })).toBeUndefined()
+  await ui.unmount()
+})
+
 const GITLAB_ON = { options: { gitlab: 'on' } }
 
 test('a GitLab issue is created for an issue', GITLAB_ON, async ($, on) => {
