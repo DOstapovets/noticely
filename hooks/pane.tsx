@@ -82,11 +82,13 @@ export async function view($: Api) {
   const sessionId = await $.session.id()
   const mine = list.filter(issue => issue.noticedIn === sessionId)
   const found = await read($, todos)
+  // Switched on, the Code tab shows even with no comments, so the switch is seen to work.
+  const { todos: todosOn } = await read($, settings)
   const chosen = await read($, tab)
   const current: Tab =
     (chosen === 'session' && mine.length === 0) ||
     (chosen === 'completed' && done.length === 0) ||
-    (chosen === 'code' && found.length === 0) ||
+    (chosen === 'code' && !todosOn) ||
     (chosen === 'projects' && others.length === 0)
       ? 'all'
       : chosen
@@ -108,9 +110,9 @@ export async function view($: Api) {
 
   // The settings and the list of projects show ← Back in the tabs' place; another project open shows ← Projects instead.
   const isApart = current === 'settings' || current === 'projects'
-  const hasTabs = isApart ? !opened : mine.length > 0 || done.length > 0 || found.length > 0
+  const hasTabs = isApart ? !opened : mine.length > 0 || done.length > 0 || !!todosOn
 
-  return { list, mine, done, others, todos: found, hasTabs, current, opened, shown, kind }
+  return { list, mine, done, others, todos: found, todosOn, hasTabs, current, opened, shown, kind }
 }
 
 // Each tab, and each project opened on the Projects tab, starts at the top of its groups.
@@ -183,7 +185,7 @@ export async function renderPane($: Api, e: PaneRender) {
   const now = await read($, minute)
   // The session tab is offered only while this session has noted something, the
   // Projects tab while another project has a list; there a project's cards are read only.
-  const { mine, done, others, todos: found, hasTabs, current, opened, shown, kind } = await view($)
+  const { mine, done, others, todos: found, todosOn, hasTabs, current, opened, shown, kind } = await view($)
   const readOnly = opened !== undefined || kind === 'done'
   const confirming = kind === 'own' ? await read($, deleting) : null
 
@@ -392,7 +394,7 @@ export async function renderPane($: Api, e: PaneRender) {
       {mine.length > 0 && tabButton('session', `This session ${mine.length}`)}
       {tabButton('all', `All ${list.length}`)}
       {done.length > 0 && tabButton('completed', `✓ Completed ${done.length}`)}
-      {found.length > 0 && tabButton('code', `Code ${found.length}${session.todosCut ? '+' : ''}`)}
+      {todosOn && tabButton('code', `Code ${found.length}${session.todosCut ? '+' : ''}`)}
     </Box>
   )
   // A comment in the code is on the list by its place or by its title.
@@ -426,7 +428,7 @@ export async function renderPane($: Api, e: PaneRender) {
   // The settings, in place of the groups: how long resolved issues are kept, one choice of a row,
   // then the experimental ones, each a switch with what it does below.
   const chosen: Settings = await read($, settings)
-  const { todos: todosOn, confirm: confirmOn, keepDays = KEEP_DAYS } = chosen
+  const { confirm: confirmOn, keepDays = KEEP_DAYS } = chosen
   const settingsView = current === 'settings' && (
     <Box key="settings" flexDirection="column" flexShrink={0}>
       <Text bold>Completed</Text>
@@ -691,6 +693,7 @@ export async function renderPane($: Api, e: PaneRender) {
         </Box>
       )}
       {(current === 'all' || current === 'session') && list.length === 0 && <Text dimColor>Nothing noticed in this project.</Text>}
+      {current === 'code' && found.length === 0 && <Text dimColor>No TODO, FIXME, HACK or XXX comments in the code.</Text>}
       {listsProjects &&
         projectRow(
           { root: session.storeKey.slice('issues:'.length), ...(session.remote ? { remote: session.remote } : {}), items: list },

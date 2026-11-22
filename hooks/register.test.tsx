@@ -1853,11 +1853,12 @@ test('the Code tab lists the comments in the code, by tag, and puts one on the l
   await seen.clock.advance(30_000)
   expect(await lines(ui)).toEqual(['▾ FIXME 1', 'crashes on empty input'])
 
-  // With none left the tab goes, and the pane shows every issue.
+  // With none left the tab stays while the setting is on, and says so.
   seen.grep = ''
   await seen.clock.advance(30_000)
-  expect(await ui.find({ key: 'tab-code' })).toBeUndefined()
-  expect(await lines(ui)).toEqual(['▾ High 1', '#1 crashes on empty input', '▾ Low 1', '#2 cache the result'])
+  expect((await ui.find({ key: 'tab-code' }))?.text.trim()).toBe('Code 0')
+  expect(await lines(ui)).toEqual([])
+  expect(await ui.find({ type: 'Text', text: 'No TODO, FIXME, HACK or XXX comments in the code.' })).toBeDefined()
   await ui.unmount()
 })
 
@@ -1894,7 +1895,7 @@ test('✦ Analyze starts a session that reads the comments not on the list whole
   await ui.unmount()
 })
 
-test('the Code tab holds 200 comments at most, and none outside a repository', async ($, on) => {
+test('the Code tab holds 200 comments at most, and none outside a repository, where it reads Code 0', async ($, on) => {
   const seen = engine(on, { settings: { todos: true } })
   seen.grep = Array.from({ length: 205 }, (_, i) => `a.ts:${i + 1}:// TODO: step ${i + 1}`).join('\n')
   await $.session.start(start('/proj/a'))
@@ -1912,7 +1913,7 @@ test('the Code tab holds 200 comments at most, and none outside a repository', a
     presentation: { isFullscreen: true, columns: 160 },
   })
   const after = await $.ui.mount({ ...PANE, surface: 'terminal' })
-  expect(await after.find({ key: 'tab-code' })).toBeUndefined()
+  expect((await after.find({ key: 'tab-code' }))?.text.trim()).toBe('Code 0')
   await after.unmount()
 })
 
@@ -1963,6 +1964,22 @@ test('the experimental Code tab is off until switched on in Settings, beside Fee
   await seen.clock.advance(30_000)
   expect(seen.grepped).toBe(asked)
   await other.unmount()
+})
+
+test('switched on where the code holds no comments, the Code tab shows Code 0 and says so', async ($, on) => {
+  const seen = engine(on)
+  seen.grep = ''
+  await $.session.start(start('/proj/a'))
+  await seen.clock.settle()
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  await ui.press({ key: 'tab-settings' })
+  await ui.press({ key: 'setting-todos' })
+  await ui.press({ key: 'tab-back' })
+  expect((await ui.find({ key: 'tab-code' }))?.text.trim()).toBe('Code 0')
+  await ui.press({ key: 'tab-code' })
+  expect(await ui.find({ type: 'Text', text: 'No TODO, FIXME, HACK or XXX comments in the code.' })).toBeDefined()
+  expect(await ui.find({ key: 'analyze' })).toBeUndefined()
+  await ui.unmount()
 })
 
 test('the lists kept under the old name, noticed-issues, come over once, and a key already here stays', async ($, on) => {

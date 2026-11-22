@@ -128,7 +128,8 @@ what may change or go away in a later version: **[ ] Code tab** switches the Cod
 below on or off, and is off until you switch it on.
 
 **Comments in the code** (experimental, off until switched on in **⚙ Settings**). When the working tree's tracked files hold `TODO`, `FIXME`,
-`HACK` or `XXX` comments, a **Code 12** tab follows **All**. A tag counts after a
+`HACK` or `XXX` comments, a **Code 12** tab follows **All**. While the setting is on the tab
+stays, as **Code 0** saying there are none, when the code holds no such comment. A tag counts after a
 comment's opening (`//`, `#`, `/*`, `*` at a line's start, `--`, `<!--`, `;`), so a name
 like `TODO_LIST`, or Markdown's `**TODO**`, does not; nor does an opening inside a string's
 quotes, such as a test's fixture `'a.ts:1:// TODO: x'`. The text ends where the comment
