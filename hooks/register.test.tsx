@@ -443,36 +443,37 @@ test('a setting changed in another session is picked up at the next reload', asy
 
 test('the answer under a note_issue or resolve_issue row is green when the list changed, yellow when not', async ($, on) => {
   engine(on)
-  // The engine's own result block, which other tools keep.
-  on('ui.render', { component: 'ToolResult' }, ($, e) => {
+  // The engine's own row, which draws the answer when it is given one.
+  on('ui.render', { component: 'ToolUse' }, ($, e) => {
     const { Text } = $.ui.resolve(e)
-    return <Text>engine</Text>
+    return <Text>{e.props.output === undefined ? 'row' : 'row with answer'}</Text>
   })
   await $.session.start(start('/proj/a'))
 
   const shown = async (tool: string, ran: { result?: unknown }) => {
     const ui = await $.ui.mount({
       plugin: 'noticely',
-      component: 'ToolResult',
+      component: 'ToolUse',
       surface: 'terminal',
-      props: { tool_use_id: 't1', tool, output: ran.result, isErrored: false },
+      props: { tool_use_id: 't1', tool, input: {}, output: ran.result, isRunning: false, isErrored: false, isInterrupted: false },
     })
-    const text = (await ui.findAll({ type: 'Text' }))[0]
+    const texts = await ui.findAll({ type: 'Text' })
     await ui.unmount()
-    return [text?.text, text?.props.color]
+    return texts.map(t => [t.text, t.props.color])
   }
 
+  const row = ['row', undefined]
   expect(await shown(NOTE, await $.tool.call({ tool: NOTE, title: 'Stale cache' }))).toEqual([
-    'Noted as #1; the user sees it under /noticely.',
-    'success',
+    row,
+    ['  ⎿  Noted as #1; the user sees it under /noticely.', 'success'],
   ])
   expect(await shown(NOTE, await $.tool.call({ tool: NOTE, title: 'stale cache' }))).toEqual([
-    'Already on the list as #1.',
-    'warning',
+    row,
+    ['  ⎿  Already on the list as #1.', 'warning'],
   ])
-  expect(await shown(RESOLVE, await $.tool.call({ tool: RESOLVE, id: 1 }))).toEqual(['Resolved #1.', 'success'])
-  expect(await shown(RESOLVE, await $.tool.call({ tool: RESOLVE, id: 1 }))).toEqual(['No open issue #1.', 'warning'])
-  expect(await shown('Bash', { result: 'Noted as #1' })).toEqual(['engine', undefined])
+  expect(await shown(RESOLVE, await $.tool.call({ tool: RESOLVE, id: 1 }))).toEqual([row, ['  ⎿  Resolved #1.', 'success']])
+  expect(await shown(RESOLVE, await $.tool.call({ tool: RESOLVE, id: 1 }))).toEqual([row, ['  ⎿  No open issue #1.', 'warning']])
+  expect(await shown('Bash', { result: 'Noted as #1' })).toEqual([['row with answer', undefined]])
 })
 
 test('an issue is resolved only by its number', async ($, on) => {
