@@ -386,17 +386,25 @@ export const register: Register = (on, options) => {
   })
 
   // The answer of note_issue and resolve_issue under their row: green when the
-  // list changed, yellow when it did not. Anything else is the engine's own.
-  on('ui.render', { component: 'ToolResult' }, async ($, e, next) => {
-    const { tool, output, isErrored } = e.props
+  // list changed, yellow when it did not. Anything else is the engine's own. The
+  // terminal draws the answer inside ToolUse and raises no ToolResult for it, so
+  // the row is drawn without its answer and the answer under it.
+  on('ui.render', { component: 'ToolUse' }, async ($, e, next) => {
+    const { tool, output, isErrored, isRunning } = e.props
 
-    if ((tool !== NOTE && tool !== RESOLVE) || isErrored || typeof output !== 'string') {
+    if ((tool !== NOTE && tool !== RESOLVE) || isErrored || isRunning || typeof output !== 'string') {
       return next(e)
     }
 
-    const { Text } = $.ui.resolve(e)
+    const { Box, Text } = $.ui.resolve(e)
+    const row = await next({ ...e, props: { ...e.props, output: undefined } })
 
-    return <Text color={/^(Noted|Added to|Resolved) /.test(output) ? 'success' : 'warning'}>{output}</Text>
+    return (
+      <Box flexDirection="column">
+        {row}
+        <Text color={/^(Noted|Added to|Resolved) /.test(output) ? 'success' : 'warning'}>{`  ⎿  ${output}`}</Text>
+      </Box>
+    )
   })
 
   // The wheel, or the scroll keys, move the open group under the pointer (the
