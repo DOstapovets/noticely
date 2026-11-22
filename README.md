@@ -11,6 +11,8 @@ GitHub or GitLab issue and follow its status.
 
 <p align="center"><img src="docs/assets/demo.gif" alt="Claude notes a leaked webhook secret while upgrading stripe; /noticely opens the pane, ▶ New session fixes it in the background, and the entry leaves the list once resolved." width="100%"></p>
 
+A one-minute video, [demo.mp4](docs/assets/demo.mp4), shows it in the terminal, VS Code and the desktop app.
+
 ## Install
 
 At the prompt of a Claude Code terminal session:
