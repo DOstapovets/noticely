@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.27.0](https://github.com/DOstapovets/noticely/compare/v0.26.0...v0.27.0) (2026-11-22)
+
+
+### Features
+
+* ✦ Analyze on the Code tab has Claude read each comment whole and note its issues ([23188c3](https://github.com/DOstapovets/noticely/commit/23188c3ab7d2670e2ac0a59ce75b8a62854e25b1))
+* a card keeps its number beside the title and shows its GitHub links under the detail ([ffd594a](https://github.com/DOstapovets/noticely/commit/ffd594ad1602e4fb203f001d3df55732ae181c03))
+* Ask before noting in the settings has note_issue ask the user before each new issue ([75835af](https://github.com/DOstapovets/noticely/commit/75835af3f643caa0ee27a32ce6d2077bb4fe3c18))
+* file GitLab issues from the pane and follow their state and merge requests ([bfeff0d](https://github.com/DOstapovets/noticely/commit/bfeff0d73a8969ecc3b21ac836913e9345750fb5))
+* Projects and Settings show ← Back in place of the tabs ([14c93b4](https://github.com/DOstapovets/noticely/commit/14c93b40271969e98f47e323cf2df57478f1d93b))
+* the answer of note_issue and resolve_issue is green or yellow under its row ([8838a56](https://github.com/DOstapovets/noticely/commit/8838a56ec8d288cc5de819160109344ba4f6e16d))
+
+
+### Bug Fixes
+
+* open sessions pick up settings changed in another session at the next reload ([ea157c1](https://github.com/DOstapovets/noticely/commit/ea157c1da6aab77112420e9dbc5c793bb9798837))
+* the blank row before a card's controls sits above them, not under the GitHub links ([56b68b3](https://github.com/DOstapovets/noticely/commit/56b68b351b155c1285a595b08782e19ee2ee4e14))
+* the pane's title drops its count, which the All tab already shows ([2a5100f](https://github.com/DOstapovets/noticely/commit/2a5100faf513f07b2b16506667dc02a743ed7d9e))
+
 ## [0.26.0](https://github.com/DOstapovets/noticely/compare/v0.25.0...v0.26.0) (2026-11-21)
 
 
