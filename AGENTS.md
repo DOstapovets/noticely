@@ -6,8 +6,9 @@ A Claude Code plugin. It adds two tools, `note_issue` and `resolve_issue`, throu
 which Claude records problems it noticed outside the current task. They go on a
 per-repository list, which the user sees in a pane and in a `⚑` count above the
 prompt. From the pane they can start a background session to fix an entry, file it
-as a GitHub issue, change its priority or delete it. [README.md](./README.md)
-describes what the user sees; this file is for working on the code.
+as a GitHub issue, change its priority or delete it. [README.md](./README.md) and
+the user docs in `docs/` it links to describe what the user sees; this file is for
+working on the code.
 
 ## Stack
 
@@ -55,7 +56,8 @@ hooks/todos.ts                   TODO, FIXME, HACK and XXX comments through git 
 hooks/pane.tsx                   The pane: groups, cards, tabs, scrolling
 hooks/*.test.ts(x)               Tests; register.test.tsx stubs gh, git (grep too) and claude --bg
 types/index.d.ts                 Issue, Priority, Tab, GithubStatus, Stored, Rule, Settings, Todo, Project and the $.state contract
-docs/                            Conventions for contributors and agents
+docs/                            User docs (pane, code-tab, repository-rule, github-gitlab, storage), and
+                                 conventions for contributors and agents (git_and_pr_conventions, performance)
 .claude/settings.json            Project hooks; their scripts are in .claude/hooks/
 .github/workflows/               Checks, commit and PR-title lint, release-please
 release-please-config.json       How release-please versions the plugin
@@ -166,7 +168,8 @@ for lists kept per worktree before 0.4.
 ### 4. Goal-driven execution
 
 - A bug gets a test that reproduces it, then the fix.
-- A change in behavior gets a test in `hooks/register.test.tsx` and a line in the README.
+- A change in behavior gets a test in `hooks/register.test.tsx` and a line in the README, or in the
+  `docs/` page that covers it (the pane, the Code tab, GitHub and GitLab, ...).
 - The plugin cannot measure what it draws. Layout that depends on heights
   (`cardRows`, `arrange`) is worked out from text, so a change to a card's content
   must keep `cardRows` in step with it.

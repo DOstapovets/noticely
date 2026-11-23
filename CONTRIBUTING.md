@@ -24,8 +24,8 @@ claude plugin test .
 ```
 
 Both must pass. Keep the change focused, add or update a test in
-`hooks/register.test.tsx` for what it changes, and update the README where behaviour
-changes. By contributing you assign the copyright of your contribution to
+`hooks/register.test.tsx` for what it changes, and update the README, or the `docs/` page
+it links to, where behaviour changes. By contributing you assign the copyright of your contribution to
 Dmytro Ostapovets, who owns the project ([LICENSE](./LICENSE)), and confirm that it
 is yours to assign.
 

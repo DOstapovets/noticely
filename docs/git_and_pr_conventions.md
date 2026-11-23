@@ -174,7 +174,7 @@ user and files one of these. Delete a heading rather than writing "N/A" under it
 - `claude plugin test .` passes, with a new or updated test for what changed
 - The `checks` and `commitlint` workflows are green
 - `tsc` passes against the API declarations (see AGENTS.md, "Checks")
-- The README describes the new behavior
+- The README, or the `docs/` page that covers it, describes the new behavior
 - A new `$.state` or `$.store` value is declared in `types/index.d.ts`, and a new
   field on a stored issue is optional
 - A card whose content changed still matches `cardRows`, which the pane's layout
