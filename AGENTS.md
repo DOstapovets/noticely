@@ -61,6 +61,7 @@ docs/                            User docs (pane, code-tab, repository-rule, git
 .claude/settings.json            Project hooks; their scripts are in .claude/hooks/
 .github/workflows/               Checks, commit and PR-title lint, release-please
 release-please-config.json       How release-please versions the plugin
+_config.yml                      GitHub Pages: the site built from main's README.md and docs/
 ```
 
 ## Checks

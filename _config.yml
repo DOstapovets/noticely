@@ -1,0 +1,6 @@
+# GitHub Pages builds https://dostapovets.github.io/noticely/ from main: README.md is the
+# home page, every other .md file a page of its own.
+
+# Proves the site is ours to Google Search Console (jekyll-seo-tag writes the meta tag).
+webmaster_verifications:
+  google: 6H5ZPKjYHL_iM6PTQYKoCJ6CabnzSesG41X_x6mukWo
