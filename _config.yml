@@ -4,3 +4,7 @@
 # Proves the site is ours to Google Search Console (jekyll-seo-tag writes the meta tag).
 webmaster_verifications:
   google: 6H5ZPKjYHL_iM6PTQYKoCJ6CabnzSesG41X_x6mukWo
+
+# Writes sitemap.xml with every page, for Search Console.
+plugins:
+  - jekyll-sitemap
