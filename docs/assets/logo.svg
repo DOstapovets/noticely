@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d1d22"/>
+      <stop offset="1" stop-color="#0a0a0c"/>
+    </linearGradient>
+    <linearGradient id="flag" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFB760"/>
+      <stop offset="0.5" stop-color="#F7843B"/>
+      <stop offset="1" stop-color="#E5452D"/>
+    </linearGradient>
+    <linearGradient id="pole" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFC47E"/>
+      <stop offset="1" stop-color="#E5452D"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="232" fill="url(#bg)"/>
+  <rect x="6" y="6" width="1012" height="1012" rx="226" fill="none" stroke="#fff" stroke-opacity="0.07" stroke-width="4"/>
+  <g transform="translate(-48 16)">
+    <rect x="236" y="196" width="76" height="640" rx="38" fill="url(#pole)"/>
+    <g stroke-linejoin="round" stroke-width="28">
+      <path d="M354 240 C 440 204, 524 220, 602 252 C 680 284, 736 292, 792 270 L 792 576 C 736 598, 680 590, 602 558 C 524 526, 440 510, 354 546 Z" fill="url(#flag)" stroke="url(#flag)"/>
+    </g>
+    <circle cx="800" cy="262" r="96" fill="#111115"/>
+    <circle cx="800" cy="262" r="64" fill="#FFF1E2"/>
+  </g>
+</svg>
