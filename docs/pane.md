@@ -67,6 +67,12 @@ project has a list too, and **⚙ Settings** and **✎ Feedback** at the right, 
 the tabs. In the terminal it stays there on every tab, the list of projects included,
 which pushes it down only once the list is longer than the pane.
 
+When a newer Noticely is out, **↑ 0.28.0** (its version) stands before **⚙ Settings**
+in the accent color, and a toast tells of it once per version. Pressing it updates the
+marketplace and the plugin (`claude plugin marketplace update noticely`, then
+`claude plugin update noticely@noticely`); `/reload-plugins` or a new session loads the
+new version. See [Updates](../README.md#updates).
+
 ## Other projects
 
 Once another project has a list too, a **Projects** tab stands in

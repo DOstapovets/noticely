@@ -11,6 +11,7 @@ import type { CardKind } from './layout'
 import { startAnalysis, startFeedback, startSession, whereRun } from './sessions'
 import { change, KEEP_DAYS, loadProjects, setKeepDays, toggleConfirm, toggleGroup } from './store'
 import { listTodo, scanTodos, startTodoSession, TAG_LABELS, todoIssues, toggleTodos } from './todos'
+import { installUpdate } from './update'
 
 // The engine's scan reads a `$.state` value only from a const of the file that
 // reads or writes it, so this module names the atoms it uses; types/index.d.ts
@@ -35,6 +36,8 @@ const minute = atom({ plugin: 'noticely', key: 'minute' } as const, 0)
 const todos = atom({ plugin: 'noticely', key: 'todos' } as const, [])
 // The settings, the same in every project.
 const settings = atom({ plugin: 'noticely', key: 'settings' } as const, {})
+// The newer Noticely version on main, if any, for this session only.
+const latest = atom({ plugin: 'noticely', key: 'latest' } as const, null)
 
 // What takes `$` here is a function declaration: past an import the scan
 // follows `$` into nothing else.
@@ -408,8 +411,19 @@ export async function renderPane($: Api, e: PaneRender) {
       <Text color="claude">{' ✦ Analyze '}</Text>
     </Button>
   )
+  // A newer version of the plugin, which a press installs: the label stays short, so the footer keeps to one row.
+  const newest = await read($, latest)
+  const upgrade =
+    newest &&
+    (colorlessButtons ? (
+      <Button key="update" plain label={`↑ ${newest}`} onPress={() => installUpdate($)} />
+    ) : (
+      <Button key="update" plain onPress={() => installUpdate($)}>
+        <Text color="claude">{` ↑ ${newest} `}</Text>
+      </Button>
+    ))
   // Below the groups: Projects, which leads away from this project's list, in a secondary color,
-  // Analyze on the Code tab, and Settings and Feedback, about the plugin itself, at the right.
+  // Analyze on the Code tab, and the update, Settings and Feedback, about the plugin itself, at the right.
   const footer = (
     <Box key="footer" justifyContent="space-between" marginTop={1} flexShrink={0}>
       <Box gap={1}>
@@ -417,6 +431,7 @@ export async function renderPane($: Api, e: PaneRender) {
         {current === 'code' && unlisted.length > 0 && analyze}
       </Box>
       <Box gap={1}>
+        {upgrade}
         {tabButton('settings', '⚙ Settings', 'subtle')}
         {feedback}
       </Box>

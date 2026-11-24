@@ -53,6 +53,7 @@ hooks/github.ts                  GitHub through gh: filing an issue, reading sta
 hooks/gitlab.ts                  GitLab through glab: the same for issues and merge requests, with github.ts's helpers
 hooks/sessions.ts                Background sessions through claude --bg: a fix, Feedback
 hooks/todos.ts                   TODO, FIXME, HACK and XXX comments through git grep, for the Code tab
+hooks/update.ts                  A newer Noticely on main, through claude plugin list and $.http.fetch; installing it
 hooks/pane.tsx                   The pane: groups, cards, tabs, scrolling
 hooks/*.test.ts(x)               Tests; register.test.tsx stubs gh, git (grep too) and claude --bg
 types/index.d.ts                 Issue, Priority, Tab, GithubStatus, Stored, Rule, Settings, Todo, Project and the $.state contract
@@ -123,11 +124,12 @@ and say in the PR that you did.
   `prompt.context`), when GitHub was last asked about the list and until when it is
   paused for its rate limit under `github:<same root>` (GitLab's under `gitlab:<same root>`), the folded groups under `collapsed`, and the settings under `settings`
   (the experimental Code tab, off unless `todos` is true), and under `adoptedFrom` the
-  store files of the former names, `noticed-issues` and `notifly`, that `adoptOldStore` copied once. The
+  store files of the former names, `noticed-issues` and `notifly`, that `adoptOldStore` copied once,
+  and under `update` the newer version a toast last told of. The
   Projects tab reads every other `issues:` key.
 - `$.state`, which lasts for the session and is mirrored for drawing: the list, the resolved issues kept, the
   folded groups, the settings, the tab, the comments `git grep` found in the code, the other projects' lists and the one open on their tab, the card that asks to confirm a delete, where each group is
-  scrolled, and the minute a card's age is told from. Each value is declared in
+  scrolled, the minute a card's age is told from, and the newer version the footer offers. Each value is declared in
   `types/index.d.ts`.
 
 What the runtime guarantees, as of Claude Code 2.1.323:

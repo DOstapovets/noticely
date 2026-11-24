@@ -104,7 +104,27 @@ const engine = (on: On, stored?: Record<string, unknown>) => {
     clipboard: true,
     // The store files of the plugin's name before 0.25, by file name, under the config directory.
     oldStores: {} as Record<string, Record<string, unknown>>,
+    // The environment `$.env.get` reads.
+    env: {} as Record<string, string>,
+    // The noticely@noticely version `claude plugin list` reports, null when it is not installed;
+    // the version main's plugin.json holds, null when it cannot be fetched; and each URL fetched.
+    installed: null as string | null,
+    main: '0.27.0' as string | null,
+    fetched: [] as string[],
+    // Each `claude plugin ...` run, and what the update commands print as they exit 1, if they do.
+    plugin: [] as (readonly string[])[],
+    updateFail: null as string | null,
   }
+  on('env.get', (_, e) => ({ value: seen.env[e.name] }))
+  on('http.fetch', (_, e) => {
+    seen.fetched.push(e.url)
+    return {
+      value:
+        seen.main === null
+          ? { status: 404, ok: false, headers: {}, text: '404: Not Found' }
+          : { status: 200, ok: true, headers: {}, text: JSON.stringify({ name: 'noticely', version: seen.main }) },
+    }
+  })
   const OLD_STORE_DIR = '/home/.claude/plugins/store'
   on('fs.list', (_, e) => ({
     value:
@@ -174,6 +194,18 @@ const engine = (on: On, stored?: Record<string, unknown>) => {
           isStderrTruncated: false,
         },
       }
+    }
+    if (e.argv[0] === 'claude' && e.argv[1] === 'plugin') {
+      seen.plugin.push(e.argv)
+      const exit = (exitCode: number, stdout: string, stderr = '') => ({
+        value: { exitCode, stdout, stderr, isStdoutTruncated: false, isStderrTruncated: false },
+      })
+      if (e.argv[2] === 'list') {
+        return exit(0, JSON.stringify(seen.installed === null ? [] : [{ id: 'noticely@noticely', version: seen.installed, enabled: true }]))
+      }
+      if (seen.updateFail !== null) return exit(1, '', seen.updateFail)
+      if (e.argv[2] === 'update') seen.installed = seen.main
+      return exit(0, '')
     }
     if (seen.fail === 'spawn') {
       throw new Error(`${e.argv[0]}: command not found`)
@@ -1996,6 +2028,114 @@ test('a list kept under notifly, the name before this one, wins over the older n
   await $.session.start(start('/proj/a'))
   expect(seen.store.get('issues:/proj/a')).toEqual(newer)
   expect(seen.store.get('adoptedFrom')).toEqual([NEWER, OLDER])
+})
+
+const MANIFEST = 'https://raw.githubusercontent.com/DOstapovets/noticely/main/.claude-plugin/plugin.json'
+// The toasts that tell of a newer version, not the setup's offer beside them.
+const told = (toast: string) => toast.includes(' is out ')
+
+test('a newer version on main is told of once and offered in the footer, on every surface', async ($, on) => {
+  const seen = engine(on)
+  seen.installed = '0.27.0'
+  seen.main = '0.28.0'
+
+  await $.session.start(start('/proj/a'))
+  await seen.clock.settle()
+  expect(seen.plugin).toEqual([['claude', 'plugin', 'list', '--json']])
+  expect(seen.fetched).toEqual([MANIFEST])
+  expect(seen.toasts.filter(told)).toEqual(['⚑ Noticely 0.28.0 is out (you have 0.27.0) · ↑ 0.28.0 in /noticely installs it'])
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  expect((await ui.find({ key: 'update' }))?.text).toBe(' ↑ 0.28.0 ')
+  await ui.unmount()
+  // VS Code fills every Button alike: the label is the button's own.
+  const vscode = await $.ui.mount({ ...PANE, surface: 'vscode' })
+  expect((await vscode.find({ key: 'update' }))?.props.label).toBe('↑ 0.28.0')
+  await vscode.unmount()
+
+  // Another session, or this one again: offered, not told of again.
+  await $.session.start(start('/proj/b'))
+  await seen.clock.settle()
+  expect(seen.toasts.filter(told)).toHaveLength(1)
+  const again = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  expect(await again.find({ key: 'update' })).toBeDefined()
+  await again.unmount()
+})
+
+test('nothing is offered when the version is current, not from the marketplace, or updates are off', async ($, on) => {
+  const seen = engine(on)
+  const offered = async () => {
+    await $.session.start(start('/proj/a'))
+    await seen.clock.settle()
+    const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+    const found = await ui.find({ key: 'update' })
+    await ui.unmount()
+    return found !== undefined
+  }
+
+  // Current: main holds the version installed.
+  seen.installed = '0.27.0'
+  expect(await offered()).toBe(false)
+  expect(seen.fetched).toHaveLength(1)
+
+  // A `--plugin-dir` checkout or a directory marketplace: main is not even asked.
+  seen.installed = null
+  seen.main = '0.28.0'
+  expect(await offered()).toBe(false)
+  expect(seen.fetched).toHaveLength(1)
+
+  // main cannot be read.
+  seen.installed = '0.27.0'
+  seen.main = null
+  expect(await offered()).toBe(false)
+
+  // Updates turned off for Claude Code: neither `claude plugin list` nor main is asked.
+  seen.main = '0.28.0'
+  seen.env.DISABLE_AUTOUPDATER = '1'
+  const listed = seen.plugin.length
+  const fetched = seen.fetched.length
+  expect(await offered()).toBe(false)
+  expect(seen.plugin).toHaveLength(listed)
+  expect(seen.fetched).toHaveLength(fetched)
+  expect(seen.toasts.filter(told)).toEqual([])
+})
+
+test('a background session does not look for a newer version', async ($, on) => {
+  const seen = engine(on)
+  seen.installed = '0.27.0'
+  seen.main = '0.28.0'
+
+  await $.session.start({ ...start('/proj/a'), isInteractive: false })
+  await seen.clock.settle()
+  expect(seen.plugin).toEqual([])
+  expect(seen.fetched).toEqual([])
+})
+
+test('↑ updates the marketplace, then the plugin, and the footer lets it go', async ($, on) => {
+  const seen = engine(on)
+  seen.installed = '0.27.0'
+  seen.main = '0.28.0'
+  await $.session.start(start('/proj/a'))
+  await seen.clock.settle()
+
+  // A failure says why, and the offer stays.
+  seen.updateFail = 'error: could not reach github.com'
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  await ui.press({ key: 'update' })
+  expect(seen.plugin.at(-1)).toEqual(['claude', 'plugin', 'marketplace', 'update', 'noticely'])
+  expect(seen.toasts.at(-1)).toBe('Could not update Noticely: error: could not reach github.com')
+  expect(await ui.find({ key: 'update' })).toBeDefined()
+
+  seen.updateFail = null
+  await ui.press({ key: 'update' })
+  // Never with -y: that would accept a changed install command nobody looked at.
+  expect(seen.plugin.slice(-2)).toEqual([
+    ['claude', 'plugin', 'marketplace', 'update', 'noticely'],
+    ['claude', 'plugin', 'update', 'noticely@noticely'],
+  ])
+  expect(seen.toasts.at(-1)).toBe('↑ Noticely 0.28.0 installed · /reload-plugins or a new session loads it')
+  expect(await ui.find({ key: 'update' })).toBeUndefined()
+  await ui.unmount()
 })
 
 // What the plugin costs while nothing happens, and per action: every `$.store`

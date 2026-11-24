@@ -11,6 +11,7 @@ import { renderPane, view } from './pane'
 import { offerSetup, startFeedback, startSetup, whereRun } from './sessions'
 import { addIssue, adoptOldStore, change, COLLAPSED_KEY, complete, load, loadProjects, migrate, SETTINGS_KEY, similar } from './store'
 import { scanTodos } from './todos'
+import { checkUpdate } from './update'
 
 const PANE = 'noticely'
 const TITLE = 'Noticely'
@@ -156,6 +157,10 @@ export const register: Register = (on, options) => {
     })
     void refreshGithub($)
     void refreshGitlab($)
+    // Not in background sessions: nobody would see the offer there.
+    if (e.isInteractive) {
+      void checkUpdate($)
+    }
 
     if (list.length > 0) {
       void openPane($)

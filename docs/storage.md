@@ -11,7 +11,8 @@ written with every change from 0.22 on, so the Projects tab of another project c
 name it and tell its age. A list from an earlier version shows only its directory
 until it next changes.
 
-The settings, and which priority groups are folded, are kept once for every project.
+The settings, and which priority groups are folded, are kept once for every project,
+as is the newer version a toast last told of, so each one is told once.
 The [repository rule](./repository-rule.md) is kept beside the repository's list.
 
 ## Several sessions at once

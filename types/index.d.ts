@@ -75,6 +75,11 @@ export type Stored = {
   updatedAt?: number
 }
 
+/** What `$.store` keeps under `update`, the same in every project: the newer Noticely version a toast last told of, so each is told once. */
+export type UpdateTold = {
+  version: string
+}
+
 /** What `$.store` keeps per repository under `github:<root>`, and for GitLab under `gitlab:<root>`, shared by its sessions: when GitHub was last asked about its list, and until when it is not asked, as its rate limit ran low. */
 export type GithubChecked = {
   checkedAt?: number
@@ -126,6 +131,8 @@ declare module 'claude-code' {
       scrolled: Partial<Record<Priority, number>>
       /** The time a card's age is told from, `$.clock.now()` as read once each minute turned. */
       minute: number
+      /** The version on main when it is newer than the one installed from the marketplace, for the pane's ↑ button; null otherwise. */
+      latest: string | null
     }
   }
 }
