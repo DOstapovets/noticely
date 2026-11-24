@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.28.2](https://github.com/DOstapovets/noticely/compare/v0.28.1...v0.28.2) (2026-11-24)
+
+
+### Bug Fixes
+
+* the ↑ toast names the version installed, not the one offered ([23de067](https://github.com/DOstapovets/noticely/commit/23de067bcc3703a782cbbcb91ef13c64b7aa1850))
+* the pane's update offer follows main while a session runs ([6e8ce4f](https://github.com/DOstapovets/noticely/commit/6e8ce4f32dbb98e46e0c74e651ae7a201db42373))
+
 ## [0.28.1](https://github.com/DOstapovets/noticely/compare/v0.28.0...v0.28.1) (2026-11-24)
 
 
