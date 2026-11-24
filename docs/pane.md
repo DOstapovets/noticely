@@ -33,7 +33,7 @@ described in [Code tab](./code-tab.md).
 
 ## Cards
 
-Within a group the newest entry comes first. Each entry is a card with its number and
+Within a group the newest entry comes first. Each entry is a card with its number, `N-3`, and
 title in bold on one line, wrapped when long, and, at the top right, when it was noted: `just now`, `5m ago`, `3h ago`,
 then after a day the date and time, `06.11 14:05`. A blank row below the title, dimmed, come the
 file on one line (shortened in the middle when it does not fit) and the detail cut to
@@ -52,7 +52,7 @@ three lines. A blank row above them, these are its controls:
 - **↗ GitLab issue** does the same with `glab issue create` in the project of the
   session's directory, and links it as `↗ Issue #42 (open)`: see
   [GitLab status](./github-gitlab.md#gitlab-status). Shown only where GitLab is on.
-- **⎘ Copy** puts the entry on the clipboard to paste into a prompt: `#3` and the
+- **⎘ Copy** puts the entry on the clipboard to paste into a prompt: `N-3` and the
   title, then `Where:` and the file, then the detail whole. A toast says it was copied,
   or why not.
 - **✕**, red, in the card's top right corner, deletes the entry. The first press only

@@ -35,7 +35,7 @@ test('text wraps word by word, a word wider than a row broken', () => {
 })
 
 test("a card's rows: heading, file, detail cut to three lines, links, border and controls", () => {
-  // `#1 Short`, then the border's two rows, a blank row, the controls' row and a blank row.
+  // `N-1 Short`, then the border's two rows, a blank row, the controls' row and a blank row.
   expect(cardRows(issue(), 40, false, NOW)).toBe(6)
   // A blank row between the heading and the file or detail.
   expect(cardRows(issue({ file: 'src/a.ts' }), 40, false, NOW)).toBe(8)
@@ -59,13 +59,13 @@ test("a card's rows: heading, file, detail cut to three lines, links, border and
 })
 
 test('the corner beside the heading takes its width from the age, or from the delete prompt', () => {
-  // 40 columns less `just now  ✕ ` and a column leave 27: `#1` and 24 characters fit.
-  const title = 'x'.repeat(24)
+  // 40 columns less `just now  ✕ ` and a column leave 27: `N-1` and 23 characters fit.
+  const title = 'x'.repeat(23)
   expect(cardRows(issue({ title }), 40, false, NOW)).toBe(6)
   // `Delete? ✓  ↩ ` and its margin take 14, so the same title wraps.
   expect(cardRows(issue({ title }), 40, true, NOW)).toBe(7)
   // `5m ago` is shorter than `just now`: two more columns.
-  const longer = 'x'.repeat(26)
+  const longer = 'x'.repeat(25)
   expect(cardRows(issue({ title: longer }), 40, false, NOW)).toBe(7)
   expect(cardRows(issue({ title: longer, createdAt: NOW - 5 * MINUTE }), 40, false, NOW)).toBe(6)
 })
@@ -147,7 +147,7 @@ test('a project is named owner/repo from its remote, else after its directory', 
 })
 
 test('a read-only card has no row of controls and only its age in the corner', () => {
-  // `#1 ` and 26 characters. At 40 columns the corner `just now  ✕ ` leaves 27 for
+  // `N-1 ` and 26 characters. At 40 columns the corner `just now  ✕ ` leaves 27 for
   // the heading, which wraps it; `just now` alone leaves 31, which hold it.
   const long = issue({ title: 'abcdefghij abcdefghij abcd' })
   expect(cardRows(long, 40, false, NOW)).toBe(2 + 5)

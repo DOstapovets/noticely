@@ -15,7 +15,7 @@ const issues = atom({ plugin: 'noticely', key: 'issues' } as const, [])
 
 const prompt = (issue: Issue) =>
   [
-    `Fix noticed issue #${issue.id}: ${issue.title}`,
+    `Fix noticed issue N-${issue.id}: ${issue.title}`,
     issue.file && `Where: ${issue.file}`,
     issue.detail && `Detail: ${issue.detail}`,
     issue.githubUrl && `GitHub issue: ${issue.githubUrl}`,
@@ -54,7 +54,7 @@ export async function startSession($: Api, id: number) {
 
   starting.add(id)
   try {
-    const sessionId = await background($, prompt(issue), `#${id}`)
+    const sessionId = await background($, prompt(issue), `N-${id}`)
 
     if (!sessionId) {
       return
@@ -62,7 +62,7 @@ export async function startSession($: Api, id: number) {
 
     // Held until the id is saved: until then the pane still draws ▶.
     await change($, list => list.map(i => (i.id === id ? { ...i, sessionId } : i)))
-    await $.ui.toast(`▶ #${id} → background session ${sessionId} · claude attach ${sessionId}`)
+    await $.ui.toast(`▶ N-${id} → background session ${sessionId} · claude attach ${sessionId}`)
   } finally {
     starting.delete(id)
   }

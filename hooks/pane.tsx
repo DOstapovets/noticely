@@ -156,11 +156,11 @@ async function confirmRemove($: Api, id: number) {
 
 // The issue as text to paste into a prompt: its number and title, where, and the detail whole.
 async function copyIssue($: Api, issue: Issue, surface: RenderSurface) {
-  const text = [`#${issue.id} ${issue.title}`, issue.file && `Where: ${issue.file}`, issue.detail && `\n${issue.detail}`]
+  const text = [`N-${issue.id} ${issue.title}`, issue.file && `Where: ${issue.file}`, issue.detail && `\n${issue.detail}`]
     .filter(Boolean)
     .join('\n')
   const copied = await $.ui.copy({ text, surface })
-  await $.ui.toast(copied.isCopied ? `⎘ #${issue.id} copied: paste it into the prompt` : `Could not copy #${issue.id}: ${copied.reason}`)
+  await $.ui.toast(copied.isCopied ? `⎘ N-${issue.id} copied: paste it into the prompt` : `Could not copy N-${issue.id}: ${copied.reason}`)
 }
 
 export async function renderPane($: Api, e: PaneRender) {
@@ -248,7 +248,7 @@ export async function renderPane($: Api, e: PaneRender) {
         <Box key={`head-${issue.id}`} flexGrow={1} flexShrink={1}>
           <Text wrap="wrap">
             <Text color="claude" bold>
-              #{issue.id}
+              N-{issue.id}
             </Text>{' '}
             <Text bold>{issue.title}</Text>
           </Text>
@@ -623,7 +623,7 @@ export async function renderPane($: Api, e: PaneRender) {
         </Text>
         <Box gap={2}>
           {listed?.sessionId && <Text color="cyan">▶ {listed.sessionId}</Text>}
-          {listed && <Text dimColor>on the list #{listed.id}</Text>}
+          {listed && <Text dimColor>on the list N-{listed.id}</Text>}
           {!listed && (
             <Button key={`todo-session-${issue.id}`} label="▶ New session" variant="primary" onPress={() => startTodoSession($, todo)} />
           )}

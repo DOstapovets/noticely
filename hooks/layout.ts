@@ -182,7 +182,7 @@ export const cardRows = (issue: Issue, columns: number, isConfirming: boolean, n
             ? 14
             : 5 + age(issue.createdAt, now).length
   const head = Math.max(1, columns - corner)
-  const title = kind === 'code' ? wrappedRows(issue.title, head) : wrappedRows(`#${issue.id} ${issue.title}`, head)
+  const title = kind === 'code' ? wrappedRows(issue.title, head) : wrappedRows(`N-${issue.id} ${issue.title}`, head)
   const detail = issue.detail ? wrappedRows(clipRows(issue.detail, columns, DETAIL_LINES), columns) : 0
   const hasControls = kind !== 'readOnly' && kind !== 'done'
   // A blank row between the heading and the file or detail (not on a comment's card), one above the

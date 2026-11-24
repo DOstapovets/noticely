@@ -51,12 +51,12 @@ export async function createGitlabIssue($: Api, id: number) {
   const gitlabUrl = ran?.exitCode === 0 ? ran.stdout.match(GITLAB_ISSUE)?.[0] : undefined
 
   if (!gitlabUrl) {
-    await $.ui.toast(`Could not create a GitLab issue for #${id}: ${ran?.stderr.trim() || 'glab issue create failed'}`)
+    await $.ui.toast(`Could not create a GitLab issue for N-${id}: ${ran?.stderr.trim() || 'glab issue create failed'}`)
     return
   }
 
   await change($, list => list.map(i => (i.id === id ? { ...i, gitlabUrl } : i)))
-  await $.ui.toast(`↗ #${id} → ${gitlabUrl}`)
+  await $.ui.toast(`↗ N-${id} → ${gitlabUrl}`)
   void refreshGitlab($, true)
 }
 
@@ -200,6 +200,6 @@ export async function refreshGitlab($: Api, force = false) {
   // Closed on GitLab: nothing is left to notice.
   const done = closed.size > 0 ? await complete($, closed) : []
   if (done.length > 0) {
-    await $.ui.toast(`✓ closed on GitLab, completed: ${done.map(id => `#${id}`).join(', ')}`)
+    await $.ui.toast(`✓ closed on GitLab, completed: ${done.map(id => `N-${id}`).join(', ')}`)
   }
 }

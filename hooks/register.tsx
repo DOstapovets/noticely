@@ -94,7 +94,7 @@ export const register: Register = (on, options) => {
           },
           duplicateOf: {
             type: 'number',
-            description: 'The number of the entry this is the same problem as: the detail is added to it instead of a new entry',
+            description: 'The number of the entry this is the same problem as, 12 for N-12: the detail is added to it instead of a new entry',
           },
           force: { type: 'boolean', description: 'Add a new entry even though similar ones are on the list' },
         },
@@ -106,7 +106,7 @@ export const register: Register = (on, options) => {
       description: 'Remove an issue from the Noticely list once it has been fixed or is no longer relevant.',
       inputSchema: {
         type: 'object',
-        properties: { id: { type: 'number', description: 'The issue number, as note_issue returned it' } },
+        properties: { id: { type: 'number', description: 'The issue number, as note_issue returned it: 12 for N-12' } },
         required: ['id'],
       },
     })
@@ -218,11 +218,11 @@ export const register: Register = (on, options) => {
       )
 
       if (!found) {
-        return { result: `Not noted: no issue #${input.duplicateOf}.` }
+        return { result: `Not noted: no issue N-${input.duplicateOf}.` }
       }
 
-      await $.ui.toast(`⚑ #${id} updated`)
-      return { result: `Added to #${id}.` }
+      await $.ui.toast(`⚑ N-${id} updated`)
+      return { result: `Added to N-${id}.` }
     }
 
     const current = await load($)
@@ -230,7 +230,7 @@ export const register: Register = (on, options) => {
 
     // The same title is not a near match: addIssue answers it as on the list already.
     if (near.length > 0 && !near.some(i => i.title.toLowerCase() === title.toLowerCase())) {
-      const names = near.map(i => `#${i.id} "${i.title}"${i.file ? ` (${i.file})` : ''}`).join(', ')
+      const names = near.map(i => `N-${i.id} "${i.title}"${i.file ? ` (${i.file})` : ''}`).join(', ')
       return {
         result:
           `Not noted: similar entries are on the list: ${names}. If one is the same problem, call note_issue ` +
@@ -258,13 +258,13 @@ export const register: Register = (on, options) => {
     })
 
     if (!isNew) {
-      return { result: `Already on the list as #${issue.id}.` }
+      return { result: `Already on the list as N-${issue.id}.` }
     }
 
     void openPane($)
 
     const note = cut.length > 0 ? ` (${cut.join(', ')})` : ''
-    return { result: `Noted as #${issue.id}${note}; the user sees it under /noticely.` }
+    return { result: `Noted as N-${issue.id}${note}; the user sees it under /noticely.` }
   })
 
   on('tool.call', { tool: RESOLVE }, async ($, e) => {
@@ -276,7 +276,7 @@ export const register: Register = (on, options) => {
 
     const found = (await complete($, new Set([id]))).length > 0
 
-    return { result: found ? `Resolved #${id}.` : `No open issue #${id}.` }
+    return { result: found ? `Resolved N-${id}.` : `No open issue N-${id}.` }
   })
 
   on('tool.call', { tool: SAVE_RULE }, async ($, e) => {
@@ -359,7 +359,7 @@ export const register: Register = (on, options) => {
           ? 'Nothing on the Noticely list.'
           : [...list]
               .sort((a, b) => rank(a) - rank(b))
-              .map(i => `[${PRIORITIES[rank(i)]!.label}] #${i.id} ${i.title}${i.file ? ` (${i.file})` : ''}`)
+              .map(i => `[${PRIORITIES[rank(i)]!.label}] N-${i.id} ${i.title}${i.file ? ` (${i.file})` : ''}`)
               .join('\n'),
     }
   })

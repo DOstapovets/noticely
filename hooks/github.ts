@@ -45,12 +45,12 @@ export async function createGithubIssue($: Api, id: number) {
   const githubUrl = ran?.exitCode === 0 ? ran.stdout.match(GITHUB_ISSUE)?.[0] : undefined
 
   if (!githubUrl) {
-    await $.ui.toast(`Could not create a GitHub issue for #${id}: ${ran?.stderr.trim() || 'gh issue create failed'}`)
+    await $.ui.toast(`Could not create a GitHub issue for N-${id}: ${ran?.stderr.trim() || 'gh issue create failed'}`)
     return
   }
 
   await change($, list => list.map(i => (i.id === id ? { ...i, githubUrl } : i)))
-  await $.ui.toast(`↗ #${id} → ${githubUrl}`)
+  await $.ui.toast(`↗ N-${id} → ${githubUrl}`)
   void refreshGithub($, true)
 }
 
@@ -66,8 +66,9 @@ const RESERVE = 200
 export const RATE_PAUSE_MS = 3 * GITHUB_MS
 
 // The line a fix session ends its pull request's description with, so a pass finds it.
-export const pullMarker = (issue: Issue) => `Noticely issue #${issue.id} (noticed ${issue.createdAt})`
-export const MARKER = /Noticely issue #(\d+) \(noticed (-?\d+)\)/g
+export const pullMarker = (issue: Issue) => `Noticely issue N-${issue.id} (noticed ${issue.createdAt})`
+// Pull requests from older versions carry the number as #12.
+export const MARKER = /Noticely issue (?:#|N-)(\d+) \(noticed (-?\d+)\)/g
 
 // One pass at a time: the timer, `/noticely` and a new issue may all ask for one.
 let refreshing = false
@@ -253,6 +254,6 @@ export async function refreshGithub($: Api, force = false) {
   // Closed on GitHub, as completed or as not planned: nothing is left to notice.
   const done = closed.size > 0 ? await complete($, closed) : []
   if (done.length > 0) {
-    await $.ui.toast(`✓ closed on GitHub, completed: ${done.map(id => `#${id}`).join(', ')}`)
+    await $.ui.toast(`✓ closed on GitHub, completed: ${done.map(id => `N-${id}`).join(', ')}`)
   }
 }

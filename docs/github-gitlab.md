@@ -24,13 +24,15 @@ GitHub's rate limit is kept in mind:
 
 The same query finds the **pull request** for an entry. It is either a pull request
 that closes its GitHub issue, or one a background session opened for it. The session
-is asked to end the pull request's description with `Noticely issue #3 (noticed …)`,
-and a search of the repository's pull requests finds that line. The card shows the
+is asked to end the pull request's description with `Noticely issue N-3 (noticed …)`,
+and a search of the repository's pull requests finds that line. Noticely writes its numbers as
+`N-3`, never `#3`, which GitHub and GitLab would link to the repository's own issue or
+pull request 3. A line written as `#3` by an older version is still found. The card shows the
 pull request on the same line as the issue's link, `⎇ PR #12 (draft)`, then `open`,
 `merged` or `closed`; where both do not fit on one line, each takes a line of its own. With several, an open one wins over a merged one, then the newest.
 
 When the GitHub issue is **closed**, as completed or as not planned, the entry is
-moved to the Completed tab and a toast says `✓ closed on GitHub, completed: #1`. This is
+moved to the Completed tab and a toast says `✓ closed on GitHub, completed: N-1`. This is
 final: if the issue is reopened, the entry does not come back.
 
 Requires the [GitHub CLI](https://cli.github.com), signed in with `gh auth login`,
@@ -47,12 +49,12 @@ every 5 minutes after that, once in 5 minutes per repository. Projects in subgro
 - The card shows whether the issue is open, `↗ Issue #42 (open)`. GitLab has no
   Status column like GitHub's project boards, so none is shown.
 - The **merge request** a background session opened is found by the same
-  `Noticely issue #3 (noticed …)` line, which the session is asked to end its
+  `Noticely issue N-3 (noticed …)` line, which the session is asked to end its
   description with, followed by `Closes <issue URL>`. The card shows it as
   `⎇ MR !12 (draft)`, then `open`, `merged` or `closed`. A merge request opened by hand
   that closes the issue is not looked up.
 - When the GitLab issue is **closed**, the entry moves to the Completed tab and a toast
-  says `✓ closed on GitLab, completed: #1`.
+  says `✓ closed on GitLab, completed: N-1`.
 - When GitLab refuses a query as over its rate limit (`429`), no session of the
   repository asks again for 15 minutes.
 

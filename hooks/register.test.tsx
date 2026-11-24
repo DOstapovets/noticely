@@ -315,11 +315,11 @@ test('issues are noted, deleted, resolved and kept per project', async ($, on) =
   expect(seen.opened).toBe(0)
 
   const first = await $.tool.call({ tool: NOTE, title: 'JWT in settings.local.json', file: '.claude/settings.local.json' })
-  expect(answer(first)).toContain('#1')
+  expect(answer(first)).toContain('N-1')
   expect(seen.opened).toBe(1)
   await $.tool.call({ tool: NOTE, title: 'Jest gate red on master', detail: 'since 2026-08-26' })
   const dup = await $.tool.call({ tool: NOTE, title: 'jest gate red on master' })
-  expect(answer(dup)).toContain('Already on the list as #2')
+  expect(answer(dup)).toContain('Already on the list as N-2')
   expect(await flag($)).toBe('⚑ 2 issues · 2 this session')
 
   for (const surface of ['terminal', 'desktop'] as const) {
@@ -350,7 +350,7 @@ test('issues are noted, deleted, resolved and kept per project', async ($, on) =
   expect(seen.opened).toBe(opened + 1)
 
   const back = await $.ui.mount({ ...PANE, surface: 'terminal' })
-  expect(await lines(back)).toContain('#3 Stale playwright cache')
+  expect(await lines(back)).toContain('N-3 Stale playwright cache')
   await back.unmount()
 
   const cleared = await $.command.run({
@@ -389,9 +389,9 @@ test('a change in the pane keeps what another session noted meanwhile', async ($
   expect(kept.items.map((i: { id: number }) => i.id)).toEqual([2, 3, 4])
   expect(kept.nextId).toBe(5)
   expect(await flag($)).toBe('⚑ 3 issues · 1 this session')
-  // The next one gets a number of its own, so resolving #3 resolves the one noted elsewhere.
-  expect(answer(await $.tool.call({ tool: NOTE, title: 'Dead link in README' }))).toContain('#5')
-  expect(answer(await $.tool.call({ tool: RESOLVE, id: 3 }))).toBe('Resolved #3.')
+  // The next one gets a number of its own, so resolving N-3 resolves the one noted elsewhere.
+  expect(answer(await $.tool.call({ tool: NOTE, title: 'Dead link in README' }))).toContain('N-5')
+  expect(answer(await $.tool.call({ tool: RESOLVE, id: 3 }))).toBe('Resolved N-3.')
   expect(seen.store.get('issues:/proj/a').items.map((i: { title: string }) => i.title)).toEqual([
     'Jest gate red on master',
     'Flaky e2e login',
@@ -416,11 +416,11 @@ test('changes made at the same moment in one session all land, each issue at a n
   await ui.unmount()
 
   expect(answers.map(answer)).toEqual([
-    'Noted as #2; the user sees it under /noticely.',
-    'Resolved #1.',
-    'Noted as #3; the user sees it under /noticely.',
-    'Noted as #4; the user sees it under /noticely.',
-    'Already on the list as #3.',
+    'Noted as N-2; the user sees it under /noticely.',
+    'Resolved N-1.',
+    'Noted as N-3; the user sees it under /noticely.',
+    'Noted as N-4; the user sees it under /noticely.',
+    'Already on the list as N-3.',
   ])
   const kept = seen.store.get('issues:/proj/a')
   expect(kept.items.map((i: { id: number }) => i.id)).toEqual([2, 3, 4])
@@ -435,7 +435,7 @@ test('with Ask before noting on, a new issue goes on the list only once the user
   expect((await ui.find({ key: 'setting-confirm' }))?.text).toBe('[ ] Ask before noting')
 
   // Off, the default: nothing is asked.
-  expect((await $.tool.call({ tool: NOTE, title: 'Stale cache' })).result).toMatch(/^Noted as #1/)
+  expect((await $.tool.call({ tool: NOTE, title: 'Stale cache' })).result).toMatch(/^Noted as N-1/)
   const before = seen.asked.length
 
   await ui.press({ key: 'setting-confirm' })
@@ -451,12 +451,12 @@ test('with Ask before noting on, a new issue goes on the list only once the user
   seen.choice = null
   expect((await $.tool.call({ tool: NOTE, title: 'Leaked token' })).result).toBe('Not noted: the user did not answer.')
   seen.choice = 'Add'
-  expect((await $.tool.call({ tool: NOTE, title: 'Leaked token' })).result).toMatch(/^Noted as #2/)
+  expect((await $.tool.call({ tool: NOTE, title: 'Leaked token' })).result).toMatch(/^Noted as N-2/)
 
   // One on the list already, and detail added to an entry, are not asked about.
   const asked = seen.asked.length
-  expect((await $.tool.call({ tool: NOTE, title: 'stale cache' })).result).toBe('Already on the list as #1.')
-  expect((await $.tool.call({ tool: NOTE, title: 'x', detail: 'more', duplicateOf: 1 })).result).toBe('Added to #1.')
+  expect((await $.tool.call({ tool: NOTE, title: 'stale cache' })).result).toBe('Already on the list as N-1.')
+  expect((await $.tool.call({ tool: NOTE, title: 'x', detail: 'more', duplicateOf: 1 })).result).toBe('Added to N-1.')
   expect(seen.asked.length).toBe(asked)
   expect(asked - before).toBe(4)
 })
@@ -464,7 +464,7 @@ test('with Ask before noting on, a new issue goes on the list only once the user
 test('a setting changed in another session is picked up at the next reload', async ($, on) => {
   const seen = engine(on)
   await $.session.start(start('/proj/a'))
-  expect((await $.tool.call({ tool: NOTE, title: 'Stale cache' })).result).toMatch(/^Noted as #1/)
+  expect((await $.tool.call({ tool: NOTE, title: 'Stale cache' })).result).toMatch(/^Noted as N-1/)
 
   // Another session switches Ask before noting on.
   seen.store.set('settings', { confirm: true })
@@ -497,15 +497,15 @@ test('the answer under a note_issue or resolve_issue row is green when the list 
   const row = ['row', undefined]
   expect(await shown(NOTE, await $.tool.call({ tool: NOTE, title: 'Stale cache' }))).toEqual([
     row,
-    ['  ⎿  Noted as #1; the user sees it under /noticely.', 'success'],
+    ['  ⎿  Noted as N-1; the user sees it under /noticely.', 'success'],
   ])
   expect(await shown(NOTE, await $.tool.call({ tool: NOTE, title: 'stale cache' }))).toEqual([
     row,
-    ['  ⎿  Already on the list as #1.', 'warning'],
+    ['  ⎿  Already on the list as N-1.', 'warning'],
   ])
-  expect(await shown(RESOLVE, await $.tool.call({ tool: RESOLVE, id: 1 }))).toEqual([row, ['  ⎿  Resolved #1.', 'success']])
-  expect(await shown(RESOLVE, await $.tool.call({ tool: RESOLVE, id: 1 }))).toEqual([row, ['  ⎿  No open issue #1.', 'warning']])
-  expect(await shown('Bash', { result: 'Noted as #1' })).toEqual([['row with answer', undefined]])
+  expect(await shown(RESOLVE, await $.tool.call({ tool: RESOLVE, id: 1 }))).toEqual([row, ['  ⎿  Resolved N-1.', 'success']])
+  expect(await shown(RESOLVE, await $.tool.call({ tool: RESOLVE, id: 1 }))).toEqual([row, ['  ⎿  No open issue N-1.', 'warning']])
+  expect(await shown('Bash', { result: 'Noted as N-1' })).toEqual([['row with answer', undefined]])
 })
 
 test('an issue is resolved only by its number', async ($, on) => {
@@ -536,7 +536,7 @@ test('a resolved issue leaves the list for the Completed tab, read only', async 
 
   // Read only, told by when it was resolved.
   await ui.press({ key: 'tab-completed' })
-  expect(await lines(ui)).toEqual(['▾ Medium 1', '#1 Stale playwright cache'])
+  expect(await lines(ui)).toEqual(['▾ Medium 1', 'N-1 Stale playwright cache'])
   expect(await ui.find({ key: 'delete-1' })).toBeUndefined()
   expect(await ui.find({ key: 'session-1' })).toBeUndefined()
   expect(await ui.find({ type: 'Text', text: 'just now' })).toBeDefined()
@@ -604,7 +604,7 @@ test('a background session is started for an issue', async ($, on) => {
   await ui.press({ key: 'session-1' })
   expect(seen.argv).toHaveLength(1)
   expect(seen.argv[0]?.slice(0, 2)).toEqual(['claude', '--bg'])
-  expect(seen.argv[0]?.[2]).toContain('Fix noticed issue #1: Stale playwright cache')
+  expect(seen.argv[0]?.[2]).toContain('Fix noticed issue N-1: Stale playwright cache')
   expect(seen.argv[0]?.[2]).toContain('resolve_issue with id 1')
   expect(seen.toasts.at(-1)).toContain('claude attach 4b7cb777')
   await ui.unmount()
@@ -623,17 +623,17 @@ test('an issue is copied to paste into a prompt', async ($, on) => {
 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
   await ui.press({ key: 'copy-1' })
-  expect(seen.copied.at(-1)).toBe('#1 Stale playwright cache\nWhere: ~/.cache/ms-playwright\n\ncache is 2 GB')
-  expect(seen.toasts.at(-1)).toBe('⎘ #1 copied: paste it into the prompt')
+  expect(seen.copied.at(-1)).toBe('N-1 Stale playwright cache\nWhere: ~/.cache/ms-playwright\n\ncache is 2 GB')
+  expect(seen.toasts.at(-1)).toBe('⎘ N-1 copied: paste it into the prompt')
 
   await ui.press({ key: 'copy-2' })
-  expect(seen.copied.at(-1)).toBe('#2 Typo in README')
+  expect(seen.copied.at(-1)).toBe('N-2 Typo in README')
 
   // No clipboard: the toast says so.
   seen.clipboard = false
   await ui.press({ key: 'copy-1' })
   expect(seen.copied).toHaveLength(2)
-  expect(seen.toasts.at(-1)).toBe('Could not copy #1: no-clipboard')
+  expect(seen.toasts.at(-1)).toBe('Could not copy N-1: no-clipboard')
   await ui.unmount()
 })
 
@@ -681,7 +681,7 @@ test('the GitHub issue\'s board column is shown, and a closed one is removed', G
   expect(seen.viewed).toEqual(['https://github.com/o/r/issues/7', 'https://github.com/o/r/issues/8'])
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
   // The link and its status sit under the detail, the heading keeps the number and title.
-  expect((await lines(ui)).find(line => line.startsWith('#1 '))).toBe('#1 Linked')
+  expect((await lines(ui)).find(line => line.startsWith('N-1 '))).toBe('N-1 Linked')
   expect((await ui.find({ key: 'links-1' }))?.text).toMatch(/^↗ Issue #7 \(open · 📋 To do\)/)
   await ui.unmount()
 
@@ -696,7 +696,7 @@ test('the GitHub issue\'s board column is shown, and a closed one is removed', G
   })
   await seen.clock.settle()
   expect(await flag($)).toBe('⚑ 2 issues')
-  expect(seen.toasts.at(-1)).toContain('#1')
+  expect(seen.toasts.at(-1)).toContain('N-1')
   // It goes to the Completed tab, as a resolved one does.
   expect(seen.store.get('issues:/proj/a').done.map((i: { id: number }) => i.id)).toEqual([1])
 
@@ -704,9 +704,9 @@ test('the GitHub issue\'s board column is shown, and a closed one is removed', G
   seen.github = { state: 'CLOSED', projectItems: [{ status: { name: '✅ Done' }, title: 'Roadmap' }] }
   await seen.clock.advance(5 * 60_000)
   expect(await flag($)).toBe('⚑ 1 issue')
-  expect(seen.toasts.at(-1)).toContain('#3')
+  expect(seen.toasts.at(-1)).toContain('N-3')
   const later = await $.ui.mount({ ...PANE, surface: 'terminal' })
-  expect(await lines(later)).toEqual(['▾ Medium 1', '#2 Not linked'])
+  expect(await lines(later)).toEqual(['▾ Medium 1', 'N-2 Not linked'])
   await later.unmount()
 })
 
@@ -743,7 +743,7 @@ test('gh missing, logged out or rate limited changes nothing on the list, and th
 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
   await ui.press({ key: 'github-2' })
-  expect(seen.toasts.at(-1)).toBe('Could not create a GitHub issue for #2: gh issue create failed')
+  expect(seen.toasts.at(-1)).toBe('Could not create a GitHub issue for N-2: gh issue create failed')
   seen.fail = 'gh: To get started with GitHub CLI, please run:  gh auth login'
   await ui.press({ key: 'github-2' })
   expect(seen.toasts.at(-1)).toContain('gh auth login')
@@ -792,10 +792,10 @@ test('a session that does not start says why, leaves ▶ to press again, and onc
 
   seen.fail = 'spawn'
   await ui.press({ key: 'session-1' })
-  expect(seen.toasts.at(-1)).toBe('Could not start a session for #1: claude --bg failed')
+  expect(seen.toasts.at(-1)).toBe('Could not start a session for N-1: claude --bg failed')
   seen.fail = 'Error: not logged in'
   await ui.press({ key: 'session-1' })
-  expect(seen.toasts.at(-1)).toBe('Could not start a session for #1: Error: not logged in')
+  expect(seen.toasts.at(-1)).toBe('Could not start a session for N-1: Error: not logged in')
   expect(seen.store.get('issues:/proj/a').items[0].sessionId).toBeUndefined()
 
   seen.fail = null
@@ -921,7 +921,7 @@ test('a GitLab issue\'s state and marked merge request are shown, and a closed o
   seen.repo = '/repo'
   seen.remote = 'git@gitlab.example.com:g/sub/p.git'
   seen.mergeRequests = [
-    { iid: '20', webUrl: 'https://gitlab.example.com/g/sub/p/-/merge_requests/20', state: 'merged', draft: false, description: 'Noticely issue #2 (noticed 5)' },
+    { iid: '20', webUrl: 'https://gitlab.example.com/g/sub/p/-/merge_requests/20', state: 'merged', draft: false, description: 'Noticely issue N-2 (noticed 5)' },
     { iid: '21', webUrl: 'https://gitlab.example.com/g/sub/p/-/merge_requests/21', state: 'opened', draft: true, description: 'Noticely issue #2 (noticed 6)' },
   ]
   await $.session.start(start('/repo'))
@@ -939,7 +939,7 @@ test('a GitLab issue\'s state and marked merge request are shown, and a closed o
   seen.gitlab = (url: string) => (url.endsWith('/7') ? 'closed' : 'opened')
   await seen.clock.advance(5 * 60_000)
   expect(await flag($)).toBe('⚑ 2 issues')
-  expect(seen.toasts.at(-1)).toBe('✓ closed on GitLab, completed: #1')
+  expect(seen.toasts.at(-1)).toBe('✓ closed on GitLab, completed: N-1')
   expect(seen.store.get('issues:/repo').done.map((i: { id: number }) => i.id)).toEqual([1])
 })
 
@@ -1005,12 +1005,12 @@ test('issues are grouped by priority, highest first, and moved between groups', 
   // No priority, or one it does not know, is medium; newest first within a group.
   expect(await order()).toEqual([
     '▾ High 1',
-    '#3 Leaked key',
+    'N-3 Leaked key',
     '▾ Medium 2',
-    '#4 Odd priority',
-    '#2 Stale doc',
+    'N-4 Odd priority',
+    'N-2 Stale doc',
     '▾ Low 1',
-    '#1 Typo in footer',
+    'N-1 Typo in footer',
   ])
 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
@@ -1028,11 +1028,11 @@ test('issues are grouped by priority, highest first, and moved between groups', 
 
   expect(await order()).toEqual([
     '▾ High 2',
-    '#3 Leaked key',
-    '#2 Stale doc',
+    'N-3 Leaked key',
+    'N-2 Stale doc',
     '▾ Medium 2',
-    '#4 Odd priority',
-    '#1 Typo in footer',
+    'N-4 Odd priority',
+    'N-1 Typo in footer',
   ])
 })
 
@@ -1045,14 +1045,14 @@ test('a priority group folds in its place, and stays folded', async ($, on) => {
 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
   await ui.press({ key: 'group-high' })
-  expect(await lines(ui)).toEqual(['▸ High 1', '▾ Medium 1', '#2 Stale doc', '▾ Low 1', '#3 Typo in footer'])
+  expect(await lines(ui)).toEqual(['▸ High 1', '▾ Medium 1', 'N-2 Stale doc', '▾ Low 1', 'N-3 Typo in footer'])
   // An open group takes what its cards need, its heading and a card of six rows;
   // a folded one only its heading.
   expect((await ui.find({ key: 'priority-medium' }))?.props.height).toBe(7)
   expect((await ui.find({ key: 'priority-low' }))?.props.height).toBe(7)
   expect((await ui.find({ key: 'priority-high' }))?.props.height).toBe(1)
   await ui.press({ key: 'group-medium' })
-  expect(await lines(ui)).toEqual(['▸ High 1', '▸ Medium 1', '▾ Low 1', '#3 Typo in footer'])
+  expect(await lines(ui)).toEqual(['▸ High 1', '▸ Medium 1', '▾ Low 1', 'N-3 Typo in footer'])
   await ui.unmount()
 
   // Kept for the next session, in another project too.
@@ -1061,7 +1061,7 @@ test('a priority group folds in its place, and stays folded', async ($, on) => {
   const other = await $.ui.mount({ ...PANE, surface: 'terminal' })
   expect(await lines(other)).toEqual(['▸ High 1'])
   await other.press({ key: 'group-high' })
-  expect(await lines(other)).toEqual(['▾ High 1', '#1 Other project'])
+  expect(await lines(other)).toEqual(['▾ High 1', 'N-1 Other project'])
   await other.unmount()
 })
 
@@ -1094,9 +1094,9 @@ test('tabs show every issue or only those this session noted, once it has noted 
     'tab-all',
     'tab-settings',
   ])
-  expect(await lines(tabs)).toEqual(['▾ High 1', '#3 Noted here', '▾ Medium 2', '#2 Other session', '#1 From before'])
+  expect(await lines(tabs)).toEqual(['▾ High 1', 'N-3 Noted here', '▾ Medium 2', 'N-2 Other session', 'N-1 From before'])
   await tabs.press({ key: 'tab-session' })
-  expect(await lines(tabs)).toEqual(['▾ High 1', '#3 Noted here'])
+  expect(await lines(tabs)).toEqual(['▾ High 1', 'N-3 Noted here'])
   expect((await tabs.find({ type: 'Text', text: ' This session 1 ' }))?.props.backgroundColor).toBe('claude')
   await tabs.press({ key: 'tab-all' })
   expect(await lines(tabs)).toHaveLength(5)
@@ -1107,7 +1107,7 @@ test('tabs show every issue or only those this session noted, once it has noted 
   await $.tool.call({ tool: RESOLVE, id: 3 })
   const after = await $.ui.mount({ ...PANE, surface: 'terminal' })
   expect(await after.find({ key: 'tab-session' })).toBeUndefined()
-  expect(await lines(after)).toEqual(['▾ Medium 2', '#2 Other session', '#1 From before'])
+  expect(await lines(after)).toEqual(['▾ Medium 2', 'N-2 Other session', 'N-1 From before'])
   await after.unmount()
 
   // To another session, an issue noted here is one of the rest.
@@ -1159,7 +1159,7 @@ test('the Projects tab lists the other projects and opens one read only', async 
   const drawn = await ui.findAll({})
   expect(drawn.filter(el => el.key).at(-1)?.key).toBe('feedback')
   expect(drawn.slice(0, drawn.findIndex(el => el.key === 'footer')).at(-1)?.props.flexGrow).toBe(1)
-  expect(await lines(ui)).toEqual(['▾ Medium 1', '#1 Here'])
+  expect(await lines(ui)).toEqual(['▾ Medium 1', 'N-1 Here'])
 
   // This project first, marked; then those with issues, named from the remote where there is one.
   await ui.press({ key: 'tab-projects' })
@@ -1187,7 +1187,7 @@ test('the Projects tab lists the other projects and opens one read only', async 
 
   // Its cards have no controls: only when each was noted.
   await ui.press({ key: 'open-/proj/b' })
-  expect(await lines(ui)).toEqual(['▾ High 1', '#1 Leak in b', '▾ Medium 1', '#2 Doc in b'])
+  expect(await lines(ui)).toEqual(['▾ High 1', 'N-1 Leak in b', '▾ Medium 1', 'N-2 Doc in b'])
   expect((await ui.find({ key: 'project-head' }))?.text).toMatch(/← Projects.*o\/b.*\/proj\/b/)
   for (const key of ['delete-1', 'session-1', 'raise-2', 'lower-1']) expect(await ui.find({ key })).toBeUndefined()
   // Its title, and the border's two rows and the blank row below: no row of controls.
@@ -1197,7 +1197,7 @@ test('the Projects tab lists the other projects and opens one read only', async 
   expect(await rows()).toHaveLength(2)
   // This project's row leads back to its own list.
   await ui.press({ key: 'open-/proj/a' })
-  expect(await lines(ui)).toEqual(['▾ Medium 1', '#1 Here'])
+  expect(await lines(ui)).toEqual(['▾ Medium 1', 'N-1 Here'])
 
   // Another session's change shows when the tab is opened again.
   seen.store.set('issues:/proj/c', { nextId: 2, items: [{ id: 1, title: 'New in c', createdAt: 950 }], updatedAt: 950 })
@@ -1210,7 +1210,7 @@ test('the Projects tab lists the other projects and opens one read only', async 
     const other = await $.ui.mount({ ...PANE, surface })
     expect(await other.find({ key: 'open-/proj/b' })).toBeDefined()
     await other.press({ key: 'open-/proj/b' })
-    expect((await lines(other)).filter(line => line.startsWith('#'))).toEqual(['#1 Leak in b', '#2 Doc in b'])
+    expect((await lines(other)).filter(line => line.startsWith('N-'))).toEqual(['N-1 Leak in b', 'N-2 Doc in b'])
     expect(await other.find({ key: 'delete-1' })).toBeUndefined()
     await other.press({ key: 'projects-back' })
     await other.unmount()
@@ -1256,24 +1256,24 @@ test('each open group scrolls its cards under a heading that stays put', async (
       origin: { kind: 'person' },
       ...(row === undefined ? {} : { pointer: { column: 10, row } }),
     } as never)
-  const high = async () => (await lines(ui)).filter(line => line.startsWith('#') && line.includes('Leak'))
+  const high = async () => (await lines(ui)).filter(line => line.startsWith('N-') && line.includes('Leak'))
 
   // Rows 4 to 23 are High's, 25 to 37 Medium's; a tick moves one card.
-  expect((await high())[0]).toBe('#8 Leak 8')
+  expect((await high())[0]).toBe('N-8 Leak 8')
   await scroll(1, 10)
-  expect((await high())[0]).toBe('#7 Leak 7')
+  expect((await high())[0]).toBe('N-7 Leak 7')
   expect(await ui.find({ type: 'Text', text: / ↑ 1 above/ })).toBeDefined()
   await scroll(3, 10)
-  expect((await high())[0]).toBe('#6 Leak 6')
+  expect((await high())[0]).toBe('N-6 Leak 6')
   // No further than the view that shows the last card: 3 cards of 6 rows fit in 19.
   for (let i = 0; i < 6; i += 1) await scroll(1, 10)
-  expect((await high())[0]).toBe('#3 Leak 3')
+  expect((await high())[0]).toBe('N-3 Leak 3')
   // Medium shows all its cards, so it does not scroll.
   await scroll(1, 35)
-  expect((await lines(ui)).slice(-3)).toEqual(['▾ Medium 2', '#10 Doc 2', '#9 Doc 1'])
+  expect((await lines(ui)).slice(-3)).toEqual(['▾ Medium 2', 'N-10 Doc 2', 'N-9 Doc 1'])
   // The scroll keys, with no pointer, move the first open group, never above its first card.
   for (let i = 0; i < 6; i += 1) await scroll(-1)
-  expect((await high())[0]).toBe('#8 Leak 8')
+  expect((await high())[0]).toBe('N-8 Leak 8')
   await ui.unmount()
 })
 
@@ -1309,7 +1309,7 @@ test('off the terminal the groups flow at their own height and the pane scrolls 
       expect(group?.props.overflow).toBeUndefined()
     }
     // Every card is drawn, none scrolled out of its group.
-    expect((await lines(ui)).filter(line => line.startsWith('#'))).toHaveLength(10)
+    expect((await lines(ui)).filter(line => line.startsWith('N-'))).toHaveLength(10)
     // VS Code draws no hover and a phone has no pointer: the priority arrows always show there.
     // More room inside a card than the terminal's whole rows allow.
     const card = await ui.find({ key: 'issue-1' })
@@ -1387,7 +1387,7 @@ test('a card says when it was noted, newest first in its group', async ($, on) =
     return drawn
   }
 
-  expect(await ages()).toEqual({ order: ['#2 Newer', '#1 Older'], older: '2h ago', newer: 'just now' })
+  expect(await ages()).toEqual({ order: ['N-2 Newer', 'N-1 Older'], older: '2h ago', newer: 'just now' })
   // Told again as the minutes pass.
   await seen.clock.advance(5 * 60_000)
   expect((await ages()).newer).toBe('5m ago')
@@ -1430,7 +1430,7 @@ test('the red ✕ in a card\'s corner asks once before it deletes', async ($, on
   await ui.press({ key: 'delete-1' })
   await ui.press({ key: 'confirm-delete-1' })
   expect(await flag($)).toBe('⚑ 1 issue · 1 this session')
-  expect(await lines(ui)).toEqual(['▾ Medium 1', '#2 Typo in footer'])
+  expect(await lines(ui)).toEqual(['▾ Medium 1', 'N-2 Typo in footer'])
   await ui.unmount()
 })
 
@@ -1457,7 +1457,7 @@ test('a very long note is stored cut, and the answer says so', async ($, on) => 
   const title = 't'.repeat(300)
   const long = await $.tool.call({ tool: NOTE, title, detail: 'd'.repeat(10_000), file: 'f'.repeat(600) })
   expect(answer(long)).toBe(
-    'Noted as #1 (title cut to 200 characters, detail cut to 4000 characters, file cut to 500 characters); ' +
+    'Noted as N-1 (title cut to 200 characters, detail cut to 4000 characters, file cut to 500 characters); ' +
       'the user sees it under /noticely.',
   )
 
@@ -1466,17 +1466,17 @@ test('a very long note is stored cut, and the answer says so', async ($, on) => 
   await ui.press({ key: 'session-1' })
   await ui.unmount()
   expect(seen.argv.at(-1)?.[2]?.split('\n').slice(0, 3)).toEqual([
-    `Fix noticed issue #1: ${'t'.repeat(199)}…`,
+    `Fix noticed issue N-1: ${'t'.repeat(199)}…`,
     `Where: ${'f'.repeat(499)}…`,
     `Detail: ${'d'.repeat(3999)}…`,
   ])
 
   // The same title, whatever follows past the cut, is the same entry.
   const dup = await $.tool.call({ tool: NOTE, title: `${title}, again` })
-  expect(answer(dup)).toBe('Already on the list as #1.')
+  expect(answer(dup)).toBe('Already on the list as N-1.')
 
   const short = await $.tool.call({ tool: NOTE, title: 'Short', detail: 'd'.repeat(4000) })
-  expect(answer(short)).toBe('Noted as #2; the user sees it under /noticely.')
+  expect(answer(short)).toBe('Noted as N-2; the user sees it under /noticely.')
 })
 
 test('a note like one on the list names it, and goes to it with duplicateOf or anew with force', async ($, on) => {
@@ -1487,10 +1487,10 @@ test('a note like one on the list names it, and goes to it with duplicateOf or a
 
   // Other words, the same problem: nothing is added, and the answer names the entry.
   const reworded = await $.tool.call({ tool: NOTE, title: 'The jest gate on master is red' })
-  expect(answer(reworded)).toContain('Not noted: similar entries are on the list: #1 "Jest gate red on master"')
+  expect(answer(reworded)).toContain('Not noted: similar entries are on the list: N-1 "Jest gate red on master"')
   // The same file at another line is a near match too, whatever the title.
   const sameFile = await $.tool.call({ tool: NOTE, title: 'Unrelated wording', file: 'hooks/store.ts:80' })
-  expect(answer(sameFile)).toContain('#2 "Stale cache" (hooks/store.ts:12)')
+  expect(answer(sameFile)).toContain('N-2 "Stale cache" (hooks/store.ts:12)')
   expect(await flag($)).toBe('⚑ 2 issues · 2 this session')
 
   const merged = await $.tool.call({
@@ -1501,8 +1501,8 @@ test('a note like one on the list names it, and goes to it with duplicateOf or a
     priority: 'high',
     duplicateOf: 1,
   })
-  expect(answer(merged)).toBe('Added to #1.')
-  expect(seen.toasts.at(-1)).toBe('⚑ #1 updated')
+  expect(answer(merged)).toBe('Added to N-1.')
+  expect(seen.toasts.at(-1)).toBe('⚑ N-1 updated')
   expect(await flag($)).toBe('⚑ 2 issues · 2 this session')
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
   expect(await ui.find({ type: 'Text', text: 'hooks/register.test.tsx' })).toBeDefined()
@@ -1512,15 +1512,15 @@ test('a note like one on the list names it, and goes to it with duplicateOf or a
   await prompt.unmount()
   expect(seen.argv.at(-1)?.[2]).toContain('Detail: since 2026-08-26\n\nfails in register.test.tsx')
   // Raised from low to high: the card moved to the first group.
-  expect((await lines(await $.ui.mount({ ...PANE, surface: 'terminal' }))).join('\n')).toMatch(/High[\s\S]*#1 Jest gate/)
+  expect((await lines(await $.ui.mount({ ...PANE, surface: 'terminal' }))).join('\n')).toMatch(/High[\s\S]*N-1 Jest gate/)
 
   const unknown = await $.tool.call({ tool: NOTE, title: 'Anything', duplicateOf: 9 })
-  expect(answer(unknown)).toBe('Not noted: no issue #9.')
+  expect(answer(unknown)).toBe('Not noted: no issue N-9.')
 
   const forced = await $.tool.call({ tool: NOTE, title: 'The jest gate on master is red', force: true })
-  expect(answer(forced)).toContain('Noted as #3')
+  expect(answer(forced)).toContain('Noted as N-3')
   const other = await $.tool.call({ tool: NOTE, title: 'Playwright browsers missing' })
-  expect(answer(other)).toContain('Noted as #4')
+  expect(answer(other)).toContain('Noted as N-4')
 })
 
 test('Feedback starts a session that interviews the user and posts only once they confirm', async ($, on) => {
@@ -1644,10 +1644,10 @@ test('worktrees share the repository list, and their old lists fold into it', as
   await $.session.start(start('/repo/.claude/worktrees/wt'))
   expect(await flag($)).toBe('⚑ 3 issues')
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
-  expect(await lines(ui)).toEqual(['▾ Medium 3', '#6 Stale doc', '#5 No memory limit', '#4 Leaked key'])
+  expect(await lines(ui)).toEqual(['▾ Medium 3', 'N-6 Stale doc', 'N-5 No memory limit', 'N-4 Leaked key'])
   expect(await ui.find({ type: 'Text', text: /Vendored issue/ })).toBeUndefined()
   await ui.unmount()
-  expect(answer(await $.tool.call({ tool: NOTE, title: 'Noted from a worktree' }))).toContain('#7')
+  expect(answer(await $.tool.call({ tool: NOTE, title: 'Noted from a worktree' }))).toContain('N-7')
 
   // The main working tree reads the same list, folded once.
   await $.session.start(start('/repo'))
@@ -1869,13 +1869,13 @@ test('the Code tab lists the comments in the code, by tag, and puts one on the l
       detail: expect.stringContaining('remove the comment'),
     }),
   ])
-  expect(seen.toasts.at(-1)).toBe('⚑ noted #1: crashes on empty input')
+  expect(seen.toasts.at(-1)).toBe('⚑ noted N-1: crashes on empty input')
   expect(await ui.find({ key: 'todo-list-2' })).toBeUndefined()
-  expect(await ui.find({ type: 'Text', text: 'on the list #1' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: 'on the list N-1' })).toBeDefined()
 
   // ▶ notes it too, and starts the session for that issue.
   await ui.press({ key: 'todo-session-1' })
-  expect(seen.argv.at(-1)?.[2]).toContain('Fix noticed issue #2: cache the result')
+  expect(seen.argv.at(-1)?.[2]).toContain('Fix noticed issue N-2: cache the result')
   expect(seen.argv.at(-1)?.[2]).toContain('Where: src/a.ts:3')
   expect(seen.argv.at(-1)?.[2]).toContain('remove the comment')
   expect(await ui.find({ type: 'Text', text: '▶ 4b7cb777' })).toBeDefined()
@@ -1890,7 +1890,7 @@ test('the Code tab lists the comments in the code, by tag, and puts one on the l
   seen.grep = ''
   await seen.clock.advance(30_000)
   expect(await ui.find({ key: 'tab-code' })).toBeUndefined()
-  expect(await lines(ui)).toEqual(['▾ High 1', '#1 crashes on empty input', '▾ Low 1', '#2 cache the result'])
+  expect(await lines(ui)).toEqual(['▾ High 1', 'N-1 crashes on empty input', '▾ Low 1', 'N-2 cache the result'])
   await ui.unmount()
 })
 
@@ -1905,7 +1905,7 @@ test('✦ Analyze starts a session that reads the comments not on the list whole
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
   expect(await ui.find({ key: 'analyze' })).toBeUndefined()
   await ui.press({ key: 'tab-code' })
-  expect(await ui.find({ type: 'Text', text: 'on the list #1' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: 'on the list N-1' })).toBeDefined()
   expect((await ui.find({ key: 'footer' }))?.text).toMatch(/^ ✦ Analyze .* ✎ Feedback $/)
 
   await ui.press({ key: 'analyze' })
@@ -2323,10 +2323,11 @@ test('a card shows the pull request that closes its GitHub issue, or the one its
       { number: 12, url: 'https://github.com/o/r/pull/12', state: 'OPEN', isDraft: true },
     ],
   }
-  // The marker names the issue and when it was noticed: #2 noticed at another time is another list's #2.
+  // The marker names the issue and when it was noticed: N-2 noticed at another time is another list's N-2.
+  // Pull requests opened by older versions wrote the number as #2.
   seen.marked = [
     { number: 20, url: 'https://github.com/o/r/pull/20', state: 'MERGED', isDraft: false, body: 'Fix it\n\nNoticely issue #2 (noticed 5)' },
-    { number: 21, url: 'https://github.com/o/r/pull/21', state: 'OPEN', isDraft: false, body: 'Noticely issue #2 (noticed 6)' },
+    { number: 21, url: 'https://github.com/o/r/pull/21', state: 'OPEN', isDraft: false, body: 'Noticely issue N-2 (noticed 6)' },
   ]
   await $.session.start(start('/repo'))
   await seen.clock.settle()
@@ -2346,6 +2347,8 @@ test('a card shows the pull request that closes its GitHub issue, or the one its
 
   // A session started for an issue is asked to mark its pull request so.
   await ui.press({ key: 'session-3' })
-  expect(seen.argv.at(-1)?.[2]).toContain('end its description with the line "Noticely issue #3 (noticed 6)".')
+  expect(seen.argv.at(-1)?.[2]).toContain('end its description with the line "Noticely issue N-3 (noticed 6)".')
+  // GitHub would link #3 to the repository's own issue or pull request 3.
+  expect(seen.argv.at(-1)?.[2]).not.toContain('#3')
   await ui.unmount()
 })

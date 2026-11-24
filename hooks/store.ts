@@ -131,7 +131,7 @@ export async function addIssue($: Api, fields: Pick<Issue, 'title' | 'detail' | 
   })
 
   if (added.isNew) {
-    await $.ui.toast(`⚑ noted #${added.issue.id}: ${added.issue.title}`)
+    await $.ui.toast(`⚑ noted N-${added.issue.id}: ${added.issue.title}`)
   }
 
   return added
