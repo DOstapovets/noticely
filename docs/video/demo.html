@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Noticely demo</title>
+<!-- Source of docs/assets/demo.mp4. render.mjs calls render(t) per frame; open with ?play to watch it in a browser. -->
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#0F1012}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:#0F1012;color:#E6E6E6;font-family:Inter,system-ui,sans-serif}
+.hide{display:none!important}
+.scene{position:absolute;inset:0}
+.win{position:absolute;left:80px;top:44px;width:1760px;height:860px;box-sizing:border-box;border-radius:14px;overflow:hidden;border:1px solid #34363B;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.bar{flex:0 0 38px;display:flex;align-items:center;gap:8px;padding:0 14px;background:#26272B;border-bottom:1px solid #34363B}
+.dot{width:12px;height:12px;border-radius:6px}
+.bar .title{flex-grow:1;text-align:center;font-size:14px;color:#8f8f8f;margin-right:52px}
+.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+.term{font-size:17px;line-height:25px}
+.dim{color:#8f8f8f}.accent{color:#E08A6B}.err{color:#FF6B80}.warn{color:#FFC107}.low{color:#B1B9F9}.ok{color:#4EBA65}.cyan{color:#6FD3F2}.link{color:#8CC8FF;text-decoration:underline}
+.b{font-weight:700}
+.ind{padding-left:2ch}
+.card{border:1px solid #45474D;border-radius:6px;padding:0 10px;margin-bottom:25px}
+.card.sel{border-color:#E08A6B}
+.row{display:flex;justify-content:space-between;gap:1ch}
+.gap{margin-top:25px}
+.ctl{display:flex;gap:2ch}
+.caption{position:absolute;left:80px;right:80px;top:930px;height:110px;display:flex;align-items:center;gap:22px}
+.tag{flex:0 0 auto;font-family:'Space Grotesk',Inter,sans-serif;font-weight:700;font-size:20px;color:#141413;background:#E08A6B;border-radius:8px;padding:6px 14px}
+.cap{font-size:30px;line-height:40px;font-weight:500;color:#EDEDED}
+.cap code{font-family:'JetBrains Mono',monospace;font-size:26px;color:#E08A6B}
+/* VS Code */
+.vs{background:#1F1F1F;color:#CCCCCC;font-size:15px;line-height:22px}
+.chip{display:inline-flex;align-items:center;padding:3px 9px;border-radius:4px;background:#2C2C2C;border:1px solid #3C3C3C;color:#CCCCCC;font-size:14px;line-height:18px;white-space:nowrap}
+.chip.on{background:#0E639C;border-color:#1177BB;color:#fff}
+.chip.quiet{color:#8A8A8A}
+.vcard{margin-left:18px;border:1px solid #3C3C3C;border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.ln{display:flex}.ln .n{width:48px;text-align:right;padding-right:18px;color:#6E7681}
+/* desktop */
+.dk{background:#1E1E1F;color:#E8E8E6;font-size:16px;line-height:24px}
+.dcard{border:1px solid #3A3B3F;border-radius:10px;padding:14px 16px;margin-bottom:14px;background:#232326}
+.dchip{display:inline-flex;padding:4px 10px;border-radius:7px;border:1px solid #3A3B3F;font-size:14px;line-height:18px}
+#ptr{position:absolute;left:0;top:0;width:28px;height:28px;z-index:10;pointer-events:none}
+#ring{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:22px;border:3px solid #E08A6B;z-index:9;opacity:0}
+</style>
+</head>
+<body>
+<div id="stage">
+
+<!-- ───────── Intro ───────── -->
+<div class="scene" data-show="0,3.6" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px">
+  <div style="display:flex;align-items:center;gap:22px">
+    <img src="../assets/icon.png" width="96" height="96" alt="">
+    <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:88px;letter-spacing:-2px">Noticely</span>
+  </div>
+  <div style="font-size:40px;font-weight:500;color:#B9B9B9">Claude saw a bug next door. <span class="accent">Now it won’t get lost.</span></div>
+  <div data-show="1.2,3.6" style="display:flex;gap:16px;margin-top:20px">
+    <span class="tag">Terminal</span><span class="tag">VS Code</span><span class="tag">Desktop app</span>
+  </div>
+</div>
+
+<!-- ───────── Terminal ───────── -->
+<div class="scene" data-show="3.6,24">
+  <div class="win mono term" style="background:#1B1B1D">
+    <div class="bar"><span class="dot" style="background:#FF5F57"></span><span class="dot" style="background:#FEBC2E"></span><span class="dot" style="background:#28C840"></span><span class="title">~/code/billing-api — claude</span></div>
+    <div style="flex-grow:1;min-height:0;display:flex">
+      <div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;padding:22px 28px 16px">
+        <div style="flex-grow:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:25px">
+          <div data-show="6.8" style="background:#2A2B2F;padding:0 8px"><span class="dim">&gt;</span> Upgrade stripe to v17 and fix whatever breaks in the webhook handler</div>
+          <div data-show="7.4"><div><span class="ok">⏺</span> <span class="b">Read</span>(config/.env.example)</div><div class="dim ind">⎿  Read 31 lines</div></div>
+          <div data-show="8.3">
+            <div><span class="ok">⏺</span> <span class="b">noticely - note_issue</span> (MCP)<span class="dim">(title: "Stripe webhook secret</span></div>
+            <div class="dim ind">committed in .env.example", file: "config/.env.example:12",</div>
+            <div class="dim ind">priority: "high")</div>
+            <div data-show="9" class="ok ind">⎿  Noted as #14; the user sees it under /noticely.</div>
+          </div>
+          <div data-show="10"><div><span class="ok">⏺</span> <span class="b">Update</span>(src/webhooks/stripe.ts)</div><div class="dim ind">⎿  Updated src/webhooks/stripe.ts with 4 additions and 3 removals</div></div>
+          <div data-show="11">
+            <div>⏺ stripe is on 17.4.0; the webhook tests pass.</div>
+            <div class="ind" style="margin-top:25px"><span class="err b">#14</span> on the list, high: .env.example commits a live webhook</div>
+            <div class="ind">secret. Rotate it in the Stripe dashboard.</div>
+          </div>
+          <div data-show="13.2" style="background:#2A2B2F;padding:0 8px"><span class="dim">&gt;</span> /noticely</div>
+        </div>
+        <div style="flex-shrink:0;margin-top:25px;display:flex;flex-direction:column">
+          <div class="b" style="padding-left:1ch">
+            <span data-show="3.6,9" data-fade="0">⚑ 6 issues</span><span data-show="9,19" data-fade="0">⚑ 7 issues · 1 this session</span><span data-show="19" data-fade="0">⚑ 6 issues</span>
+          </div>
+          <div style="border:1px solid #5A5C62;border-radius:6px;padding:0 1ch;margin-top:2px"><span class="dim">&gt;</span> <span data-type="4,6.8" data-text="Upgrade stripe to v17 and fix whatever breaks in the webhook handler"></span><span data-type="12.4,13.2" data-text="/noticely"></span><span style="background:#E6E6E6;color:#1B1B1D"> </span></div>
+          <div class="row" style="padding:0 1ch">
+            <span class="dim">? for shortcuts</span>
+            <span><span data-show="9,12.4" class="accent">⚑ noted #14: Stripe webhook secret committed…</span><span data-show="16.3,20" class="cyan">▶ #14 → background session 8c03e5d · claude attach 8c03e5d</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- pane -->
+      <div data-show="13.6" style="flex:0 0 640px;box-sizing:border-box;border-left:1px solid #34363B;padding:22px 20px 16px;display:flex;flex-direction:column">
+        <div class="b" style="margin-bottom:25px"><span data-show="13.6,19" data-fade="0">Noticely 7</span><span data-show="19" data-fade="0">Noticely 6</span></div>
+        <div style="display:flex;gap:1ch;margin-bottom:25px">
+          <span data-show="13.6,19" data-fade="0" class="accent">&#160;This session 1&#160;</span>
+          <span data-show="13.6,19" data-fade="0" class="b" style="background:#E08A6B;color:#141413">&#160;All 7&#160;</span>
+          <span data-show="19,21.6" data-fade="0" class="b" style="background:#E08A6B;color:#141413">&#160;All 6&#160;</span>
+          <span data-show="21.6" data-fade="0" class="accent">&#160;All 6&#160;</span>
+          <span data-show="19,21.6" class="ok" id="t-done">&#160;✓ Completed 1&#160;</span>
+          <span data-show="21.6" data-fade="0" class="b" style="background:#4EBA65;color:#141413">&#160;✓ Completed 1&#160;</span>
+        </div>
+        <div data-show="13.6,21.6" data-fade="0">
+          <div class="err b"><span data-show="13.6,19" data-fade="0">▾ High 2</span><span data-show="19" data-fade="0">▾ High 1</span></div>
+          <div data-show="13.6,19" class="card sel">
+            <div class="row"><span><span class="accent b">#14</span> <span class="b">Stripe webhook secret committed in .env.example</span></span><span style="white-space:nowrap"><span class="dim">just now</span> <span class="err b">✕</span></span></div>
+            <div class="dim gap">config/.env.example:12</div>
+            <div class="row gap"><span class="ctl"><span id="t-new" data-show="13.6,16.3" data-fade="0" class="accent">▶ New session</span><span data-show="16.3" data-fade="0" class="cyan">▶ 8c03e5d</span><span>↗ GitHub issue</span><span>⎘ Copy</span></span><span class="warn b">▼</span></div>
+          </div>
+          <div class="card">
+            <div class="row"><span><span class="accent b">#11</span> <span class="b">Refund retry can pay out twice on redelivery</span></span><span style="white-space:nowrap"><span class="dim">2h ago</span> <span class="err b">✕</span></span></div>
+            <div class="dim gap">src/jobs/refund.ts:88</div>
+            <div class="gap" style="display:flex;gap:3ch"><span><span class="link">↗ Issue #42</span><span class="ok"> (open)</span></span><span><span class="link">⎇ PR #57</span><span class="dim"> (draft)</span></span></div>
+            <div class="ctl gap"><span class="accent">▶ New session</span><span>⎘ Copy</span></div>
+          </div>
+          <div class="warn b" style="margin-bottom:25px">▸ Medium 3</div>
+          <div class="low b">▸ Low 2</div>
+        </div>
+        <div data-show="21.6">
+          <div class="card">
+            <div class="row"><span><span class="accent b">#14</span> <span class="b">Stripe webhook secret committed in .env.example</span></span><span class="ok" style="white-space:nowrap">✓ just now</span></div>
+            <div class="dim gap">config/.env.example:12</div>
+          </div>
+        </div>
+        <div style="flex-grow:1"></div>
+        <div class="row"><span style="color:#A0A0A0">⧉ Projects</span><span class="dim">⚙ Settings  ✎ Feedback</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="caption">
+    <span class="tag">Terminal</span>
+    <span class="cap" data-show="3.6,12.4">Claude notes a problem outside the task with <code>note_issue</code>, and keeps working.</span>
+    <span class="cap" data-show="12.4,19"><code>/noticely</code> opens the pane. <b>▶ New session</b> fixes the entry in the background.</span>
+    <span class="cap" data-show="19,24">Once fixed and resolved, the entry moves to <b class="ok">✓ Completed</b>.</span>
+  </div>
+</div>
+
+<!-- ───────── VS Code ───────── -->
+<div class="scene" data-show="24,42">
+  <div class="win vs">
+    <div class="bar" style="background:#181818;border-color:#2B2B2B"><span class="dot" style="background:#FF5F57"></span><span class="dot" style="background:#FEBC2E"></span><span class="dot" style="background:#28C840"></span><span class="title">billing-api — Visual Studio Code</span></div>
+    <div style="flex-grow:1;min-height:0;display:flex">
+      <div style="flex:0 0 52px;background:#181818;border-right:1px solid #2B2B2B;display:flex;flex-direction:column;align-items:center;gap:22px;padding-top:16px" aria-hidden="true">
+        <span style="width:22px;height:22px;border:2px solid #CCCCCC;border-radius:4px"></span><span style="width:22px;height:22px;border:2px solid #6E6E6E;border-radius:11px"></span><span style="width:22px;height:22px;border:2px solid #6E6E6E;border-radius:4px"></span>
+      </div>
+      <!-- editor -->
+      <div style="flex:0 0 560px;display:flex;flex-direction:column;border-right:1px solid #2B2B2B">
+        <div style="flex:0 0 36px;display:flex;align-items:center;padding:0 14px;border-bottom:1px solid #2B2B2B;font-size:14px"><span style="color:#E6E6E6">total.ts</span><span class="dim" style="margin-left:8px">src/invoices</span></div>
+        <div class="mono" style="padding:14px 0;font-size:15px;line-height:24px">
+          <div class="ln"><span class="n">36</span><span><span style="color:#569CD6">export const</span> <span style="color:#DCDCAA">total</span> = (lines: <span style="color:#4EC9B0">Line</span>[]) =&gt;</span></div>
+          <div class="ln"><span class="n">37</span><span>  lines.<span style="color:#DCDCAA">reduce</span>((sum, l) =&gt;</span></div>
+          <div class="ln"><span class="n">38</span><span>    sum +</span></div>
+          <div class="ln"><span class="n">39</span><span>    <span style="color:#4EC9B0">Math</span>.<span style="color:#DCDCAA">round</span>(l.net * l.rate),</span></div>
+          <div class="ln" style="background:#2A2D2E"><span class="n" style="color:#C6C6C6">40</span><span>  <span style="color:#B5CEA8">0</span>)</span></div>
+        </div>
+      </div>
+      <!-- Claude Code chat -->
+      <div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;border-right:1px solid #2B2B2B;background:#1B1B1B">
+        <div style="flex:0 0 36px;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid #2B2B2B;font-size:12px;font-weight:600;letter-spacing:.6px;color:#BBBBBB">CLAUDE CODE</div>
+        <div style="flex-grow:1;min-height:0;overflow:hidden;padding:16px;display:flex;flex-direction:column;justify-content:flex-end;gap:14px">
+          <div data-show="27.4" style="align-self:flex-end;max-width:85%;background:#2C2C2C;border:1px solid #3C3C3C;border-radius:8px;padding:8px 12px">Add a tax_region column to invoices and return it from GET /invoices/:id</div>
+          <div data-show="28" class="mono" style="font-size:14px"><span class="ok">●</span> Write <span class="dim">db/migrations/0043_add_tax_region.sql</span></div>
+          <div data-show="28.8" class="mono" style="font-size:14px"><span class="ok">●</span> noticely · note_issue <span class="dim">“Invoice totals round each line, not the sum”</span><div data-show="29.3" class="ok" style="padding-left:2ch">Noted as #13</div></div>
+          <div data-show="30.2">tax_region is added by migration 0043 and returned as <span class="mono" style="font-size:14px">taxRegion</span>. Noticed on the way: totals round each line, not the sum (#13 on the list).</div>
+        </div>
+        <div style="margin:0 16px 16px;border:1px solid #3C3C3C;border-radius:8px;padding:10px 12px;min-height:22px"><span data-type="25,27.4" data-text="Add a tax_region column to invoices and return it from GET /invoices/:id"></span><span class="dim" data-show="24,25" data-fade="0">Ask Claude…</span><span class="dim" data-show="27.4" data-fade="0">Ask Claude…</span></div>
+      </div>
+      <!-- Noticely pane -->
+      <div style="flex:0 0 560px;display:flex;flex-direction:column;background:#181818">
+        <div style="flex:0 0 36px;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid #2B2B2B;font-size:12px;font-weight:600;letter-spacing:.6px;color:#BBBBBB">NOTICELY</div>
+        <div style="flex-grow:1;overflow:hidden;padding:16px 18px;display:flex;flex-direction:column">
+          <div style="display:flex;gap:6px;margin-bottom:20px"><span data-show="29.3" class="chip quiet">This session 1</span><span class="chip on"><span data-show="24,29.3" data-fade="0">All 6</span><span data-show="29.3" data-fade="0">All 7</span></span></div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px"><span style="color:#F14C4C">●</span><span>▾ High <span data-show="24,36.3" data-fade="0">1</span><span data-show="36.3" data-fade="0">2</span></span></div>
+          <div data-show="36.3" class="vcard" style="border-color:#E08A6B">
+            <div class="row"><span><span class="accent b">#13</span> <span style="font-weight:600;color:#E6E6E6">Invoice totals round each line, not the sum</span></span><span style="display:flex;gap:6px;align-items:center"><span class="dim">just now</span><span class="chip" style="color:#F14C4C">✕</span></span></div>
+            <div class="dim mono" style="font-size:13px;margin-top:8px">src/invoices/total.ts:39</div>
+            <div style="margin-top:8px"><span style="color:#3794FF;text-decoration:underline">↗ Issue #46</span><span style="color:#89D185"> (open)</span></div>
+            <div class="row" style="margin-top:8px;align-items:center"><span style="display:flex;gap:6px"><span class="chip on">▶ New session</span><span class="chip">⎘ Copy</span></span><span class="chip quiet">▼</span></div>
+          </div>
+          <div class="vcard">
+            <div class="row"><span><span class="accent b">#11</span> <span style="font-weight:600;color:#E6E6E6">Refund retry can pay out twice on redelivery</span></span><span style="display:flex;gap:6px;align-items:center"><span class="dim">2h ago</span><span class="chip" style="color:#F14C4C">✕</span></span></div>
+            <div class="dim mono" style="font-size:13px;margin-top:8px">src/jobs/refund.ts:88</div>
+            <div class="row" style="margin-top:8px;align-items:center"><span style="display:flex;gap:6px"><span class="chip on">▶ New session</span><span class="chip">↗ GitHub issue</span><span class="chip">⎘ Copy</span></span><span class="chip quiet">▼</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px"><span style="color:#CCA700">●</span><span>▾ Medium <span data-show="24,29.3" data-fade="0">2</span><span data-show="29.3,36.3" data-fade="0">3</span><span data-show="36.3" data-fade="0">2</span></span></div>
+          <div data-show="29.3,36.3" class="vcard" style="border-color:#E08A6B">
+            <div class="row"><span><span class="accent b">#13</span> <span style="font-weight:600;color:#E6E6E6">Invoice totals round each line, not the sum</span></span><span style="display:flex;gap:6px;align-items:center"><span class="dim">just now</span><span class="chip" style="color:#F14C4C">✕</span></span></div>
+            <div class="dim mono" style="font-size:13px;margin-top:8px">src/invoices/total.ts:39</div>
+            <div class="dim">Math.round runs per line, so invoices with 7+ lines drift by a cent.</div>
+            <div data-show="33.2" style="margin-top:8px"><span style="color:#3794FF;text-decoration:underline">↗ Issue #46</span><span style="color:#89D185"> (open)</span></div>
+            <div class="row" style="margin-top:8px;align-items:center"><span style="display:flex;gap:6px"><span class="chip on">▶ New session</span><span id="v-gh" data-show="29.3,33.2" data-fade="0" class="chip">↗ GitHub issue</span><span class="chip">⎘ Copy</span></span><span style="display:flex;gap:6px"><span id="v-up" class="chip quiet" style="color:#F14C4C">▲</span><span class="chip quiet" style="color:#3794FF">▼</span></span></div>
+          </div>
+          <div class="vcard">
+            <div class="row"><span><span class="accent b">#9</span> <span style="font-weight:600;color:#E6E6E6">Webhook log prints the whole payload</span></span><span style="display:flex;gap:6px;align-items:center"><span class="dim">19.11 16:20</span><span class="chip" style="color:#F14C4C">✕</span></span></div>
+            <div class="dim mono" style="font-size:13px;margin-top:8px">src/webhooks/log.ts:17</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:14px"><span style="color:#3794FF">●</span><span>▸ Low 2</span></div>
+          <div class="row"><span class="chip quiet">⧉ Projects</span><span style="display:flex;gap:6px"><span class="chip quiet">⚙ Settings</span><span class="chip quiet">✎ Feedback</span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="caption">
+    <span class="tag">VS Code</span>
+    <span class="cap" data-show="24,31.4">The pane sits beside the editor and the Claude Code chat.</span>
+    <span class="cap" data-show="31.4,35.2"><b>↗ GitHub issue</b> files it with <code>gh</code> and follows its status.</span>
+    <span class="cap" data-show="35.2,42"><b>▲ / ▼</b> move an entry to another priority.</span>
+  </div>
+</div>
+
+<!-- ───────── Desktop app ───────── -->
+<div class="scene" data-show="42,59.5">
+  <div class="win dk">
+    <div class="bar" style="background:#18181A;border-color:#2E2F33"><span class="dot" style="background:#FF5F57"></span><span class="dot" style="background:#FEBC2E"></span><span class="dot" style="background:#28C840"></span><span class="title">Claude — billing-api</span></div>
+    <div style="flex-grow:1;min-height:0;display:flex">
+      <div style="flex:0 0 260px;background:#18181A;border-right:1px solid #2E2F33;padding:18px 14px;display:flex;flex-direction:column;gap:6px;font-size:15px">
+        <div style="padding:8px 10px;border-radius:8px;border:1px solid #3A3B3F;margin-bottom:12px">+ New session</div>
+        <div class="dim" style="font-size:12px;font-weight:600;letter-spacing:.5px;padding:0 10px">TODAY</div>
+        <div style="padding:8px 10px;border-radius:8px;background:#2A2A2D">Nightly export timeout</div>
+        <div class="dim" style="padding:8px 10px">Invoice tax_region</div>
+        <div class="dim" style="padding:8px 10px">Stripe v17 upgrade</div>
+      </div>
+      <div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;padding:24px 40px">
+        <div style="flex-grow:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:16px">
+          <div data-show="45.2" style="align-self:flex-end;background:#2E2E31;border-radius:14px;padding:10px 16px">Why does the nightly export time out?</div>
+          <div data-show="46" class="dk-tool" style="font-size:14px"><span class="dchip"><span class="ok">●</span>&#160;Bash · psql -c "EXPLAIN ANALYZE …"</span></div>
+          <div data-show="47" style="font-size:14px"><span class="dchip"><span class="ok">●</span>&#160;noticely · note_issue&#160;<span data-show="47.5" class="ok">→ Noted as #15</span></span></div>
+          <div data-show="48.2">The export scans 4.2M rows because <span class="mono" style="font-size:14px">exports.created_at</span> has no index. The index is a schema change, so I put it on the list as <b>#15</b> rather than make it here.</div>
+        </div>
+        <div style="margin-top:18px;border:1px solid #3A3B3F;border-radius:14px;padding:14px 16px;min-height:24px;background:#242427"><span data-type="43,45.2" data-text="Why does the nightly export time out?"></span><span class="dim" data-show="42,43" data-fade="0">Reply to Claude…</span><span class="dim" data-show="45.2" data-fade="0">Reply to Claude…</span></div>
+      </div>
+      <!-- pane -->
+      <div style="flex:0 0 600px;box-sizing:border-box;border-left:1px solid #2E2F33;background:#1A1A1C;padding:22px 22px;display:flex;flex-direction:column">
+        <div style="font-weight:700;margin-bottom:16px">Noticely</div>
+        <!-- list -->
+        <div data-show="42,50.3" data-fade="0" style="display:flex;flex-direction:column">
+          <div style="display:flex;gap:8px;margin-bottom:18px"><span data-show="47.5" class="dchip accent">This session 1</span><span class="dchip" style="background:#E08A6B;color:#141413;border-color:#E08A6B;font-weight:700"><span data-show="42,47.5" data-fade="0">All 7</span><span data-show="47.5" data-fade="0">All 8</span></span></div>
+          <div class="err b" style="margin-bottom:12px">▸ High 2</div>
+          <div class="warn b" style="margin-bottom:10px">▾ Medium <span data-show="42,47.5" data-fade="0">3</span><span data-show="47.5" data-fade="0">4</span></div>
+          <div data-show="47.5" class="dcard" style="border-color:#E08A6B">
+            <div class="row"><span><span class="accent b">#15</span> <b>Nightly export has no index on created_at</b></span><span class="dim" style="white-space:nowrap">just now <span class="err">✕</span></span></div>
+            <div class="dim mono" style="font-size:14px;margin-top:10px">db/schema/exports.sql:8</div>
+            <div class="dim">The export filters 4.2M rows by created_at with a full scan.</div>
+            <div style="display:flex;gap:8px;margin-top:12px"><span class="dchip accent">▶ New session</span><span class="dchip">↗ GitHub issue</span><span class="dchip">⎘ Copy</span></div>
+          </div>
+          <div class="dcard">
+            <div class="row"><span><span class="accent b">#13</span> <b>Invoice totals round each line, not the sum</b></span><span class="dim" style="white-space:nowrap">1h ago <span class="err">✕</span></span></div>
+            <div class="dim mono" style="font-size:14px;margin-top:10px">src/invoices/total.ts:39</div>
+            <div style="margin-top:10px"><span class="link">↗ Issue #46</span><span class="ok"> (open)</span>&#160;&#160;<span class="link">⎇ PR #58</span><span class="dim"> (draft)</span></div>
+          </div>
+          <div class="low b" style="margin-bottom:12px">▸ Low 2</div>
+        </div>
+        <!-- projects -->
+        <div data-show="50.3,53.8" data-fade="0" style="display:flex;flex-direction:column;gap:14px">
+          <div class="accent">← Back</div>
+          <div class="dcard" style="border-color:#E08A6B"><div class="row"><b class="accent">billing-api</b><span class="dim">this project</span></div><div class="dim mono" style="font-size:14px">~/code/billing-api</div><div><span class="err">● 2</span> <span class="warn">● 4</span> <span class="low">● 2</span> <span class="dim">· just now</span></div></div>
+          <div class="dcard" id="d-proj"><b>northwind/web-app</b><div class="dim mono" style="font-size:14px">~/code/web-app</div><div><span class="err">● 1</span> <span class="warn">● 2</span> <span class="dim">· 2h ago</span></div></div>
+          <div class="dcard dim"><b>infra-scripts</b><div class="mono" style="font-size:14px">~/code/infra-scripts</div><div>no issues</div></div>
+        </div>
+        <!-- another project, read only -->
+        <div data-show="53.8" data-fade="0" style="display:flex;flex-direction:column">
+          <div class="accent" style="margin-bottom:14px">← Projects</div>
+          <div class="b" style="margin-bottom:14px">northwind/web-app</div>
+          <div class="err b" style="margin-bottom:10px">▾ High 1</div>
+          <div class="dcard"><div class="row"><span><span class="accent b">#4</span> <b>Login redirect drops the ?next= parameter</b></span><span class="dim">2h ago</span></div><div class="dim mono" style="font-size:14px;margin-top:10px">src/auth/callback.ts:57</div></div>
+          <div class="warn b" style="margin-bottom:10px">▾ Medium 2</div>
+          <div class="dcard"><div class="row"><span><span class="accent b">#6</span> <b>Avatar upload skips the size check</b></span><span class="dim">18.11 10:02</span></div><div class="dim mono" style="font-size:14px;margin-top:10px">src/profile/upload.ts:23</div></div>
+        </div>
+        <div style="flex-grow:1"></div>
+        <div class="row"><span id="d-projects" style="color:#A0A0A0">⧉ Projects</span><span class="dim">⚙ Settings&#160;&#160;✎ Feedback</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="caption">
+    <span class="tag">Desktop app</span>
+    <span class="cap" data-show="42,49.4">The same list in the desktop app, with more room in each card.</span>
+    <span class="cap" data-show="49.4,59.5"><b>⧉ Projects</b> shows every repository’s list. Another project’s entries are read only.</span>
+  </div>
+</div>
+
+<!-- ───────── Outro ───────── -->
+<div class="scene" data-show="59.5" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px">
+  <div style="display:flex;align-items:center;gap:22px">
+    <img src="../assets/icon.png" width="84" height="84" alt="">
+    <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:76px;letter-spacing:-2px">Noticely</span>
+  </div>
+  <div class="mono" style="font-size:32px;background:#1B1B1D;border:1px solid #34363B;border-radius:12px;padding:20px 30px"><span class="dim">&gt;</span> /plugin install noticely --marketplace DOstapovets/noticely</div>
+  <div style="font-size:26px;color:#B9B9B9">Terminal · VS Code · Desktop app</div>
+</div>
+
+<svg id="ptr" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 2l16 9-7 1.5L8.5 20z" fill="#fff" stroke="#111" stroke-width="1.5" stroke-linejoin="round"/></svg>
+<div id="ring"></div>
+</div>
+
+<script>
+// Pointer path: [time, target]; target is an element id or [x, y]. null hides the pointer.
+const PATH = [
+  [14.2, null], [14.3, [1300, 700]], [15.6, 't-new'], [18.6, 't-new'], [20.6, 't-done'], [23.8, 't-done'], [23.9, null],
+  [30.6, null], [30.7, [1500, 820]], [32.0, 'v-gh'], [34.4, 'v-gh'], [35.8, 'v-up'], [40.0, 'v-up'], [40.1, null],
+  [48.6, null], [48.7, [1500, 860]], [50.0, 'd-projects'], [52.4, 'd-projects'], [53.5, 'd-proj'], [57.0, 'd-proj'], [57.1, null],
+];
+const CLICKS = [16.1, 21.4, 32.5, 36.1, 50.2, 53.7];
+const stage = document.getElementById('stage'), ptr = document.getElementById('ptr'), ring = document.getElementById('ring');
+const span = el => (el.dataset.show || el.dataset.type).split(',').map(Number);
+const ease = k => k < .5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+
+// A target hidden once clicked (a button replaced by its new state) keeps its last place.
+const seen = {};
+function at(target) {
+  if (Array.isArray(target)) return target;
+  const r = document.getElementById(target).getBoundingClientRect(), s = stage.getBoundingClientRect();
+  if (!r.width) return seen[target] || [960, 540];
+  return seen[target] = [r.left - s.left + r.width / 2, r.top - s.top + r.height * 0.6];
+}
+
+function render(t) {
+  for (const el of document.querySelectorAll('[data-show]')) {
+    const [a, b = Infinity] = span(el), on = t >= a && t < b;
+    el.classList.toggle('hide', !on);
+    el.style.opacity = on && el.dataset.fade !== '0' ? Math.min(1, (t - a) / 0.3, (b - t) / 0.3) : '';
+  }
+  for (const el of document.querySelectorAll('[data-type]')) {
+    const [a, b] = span(el), text = el.dataset.text;
+    el.textContent = t >= a && t < b ? text.slice(0, Math.ceil(text.length * Math.min(1, (t - a) / Math.max(.4, b - a - .5)))) : '';
+  }
+  let i = PATH.findIndex(p => p[0] > t);
+  const [t0, p0] = PATH[i < 0 ? PATH.length - 1 : Math.max(0, i - 1)], next = i < 0 ? null : PATH[i];
+  if (!p0 || t < PATH[0][0]) { ptr.style.opacity = 0; } else {
+    let [x, y] = at(p0);
+    if (next && next[1]) { const [x1, y1] = at(next[1]), k = ease((t - t0) / (next[0] - t0)); x += (x1 - x) * k; y += (y1 - y) * k; }
+    ptr.style.opacity = 1; ptr.style.transform = `translate(${x - 4}px, ${y - 2}px)`;
+    const c = CLICKS.find(c => t >= c && t < c + .5);
+    ring.style.opacity = c ? 1 - (t - c) / .5 : 0;
+    ring.style.left = x + 'px'; ring.style.top = y + 'px';
+    if (c) ring.style.transform = `scale(${.4 + (t - c) * 2})`;
+  }
+}
+window.render = render;
+window.DURATION = 64;
+if (location.search.includes('play')) { const s = performance.now(); (function f() { render(((performance.now() - s) / 1000) % DURATION); requestAnimationFrame(f); })(); }
+else render(0);
+</script>
+</body>
+</html>
