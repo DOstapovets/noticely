@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.28.0](https://github.com/DOstapovets/noticely/compare/v0.27.0...v0.28.0) (2026-11-24)
+
+
+### Features
+
+* the pane offers a newer Noticely version and installs it ([d95d900](https://github.com/DOstapovets/noticely/commit/d95d900251f3f6903484457fb699cc2299274248))
+
+
+### Bug Fixes
+
+* the answer of note_issue and resolve_issue is colored in the terminal ([d6e4ab4](https://github.com/DOstapovets/noticely/commit/d6e4ab4f76e42d38666e8068a8d901d67ad9eae7))
+
 ## [0.27.0](https://github.com/DOstapovets/noticely/compare/v0.26.0...v0.27.0) (2026-11-22)
 
 
