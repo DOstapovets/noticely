@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.28.1](https://github.com/DOstapovets/noticely/compare/v0.28.0...v0.28.1) (2026-11-24)
+
+
+### Bug Fixes
+
+* entries are numbered N-12, so a #-number is always GitHub's ([901a19b](https://github.com/DOstapovets/noticely/commit/901a19b95b5df88e15bb2f48fb06f4809e5f7f02))
+
 ## [0.28.0](https://github.com/DOstapovets/noticely/compare/v0.27.0...v0.28.0) (2026-11-24)
 
 
