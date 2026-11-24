@@ -4,22 +4,40 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Claude Code ships almost daily and its plugin API is early access: a release can
+  # break the plugin with no push here. On an unchanged main, a red scheduled run
+  # means the engine moved.
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   plugin:
-    name: Validate and test the plugin
+    name: Validate and test on Claude Code ${{ matrix.channel }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # latest: a change in the API turns this red before it reaches most users.
+        # stable: what most users run, which an API too new for them breaks.
+        channel: [stable, latest]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: lts/*
-      # The latest release on purpose: the plugin API is early access, and a change
-      # in it should turn this red before it reaches a user. Neither command needs a login.
-      - run: npm install --global @anthropic-ai/claude-code@latest
+      # Neither command needs a login.
+      - run: npm install --global @anthropic-ai/claude-code@${{ matrix.channel }}
       - run: claude --version
-      - run: claude plugin validate .
+      # validate type-checks the hooks module against this engine's API, but reports
+      # each finding as a warning. --strict would also fail on the CLAUDE.md warning,
+      # which the repository keeps on purpose, so every other warning fails here.
+      - name: claude plugin validate .
+        run: |
+          claude plugin validate . --json > "$RUNNER_TEMP/validate.json" || { cat "$RUNNER_TEMP/validate.json"; exit 1; }
+          jq -e '[.contents[].warnings[] | select(.message | startswith("CLAUDE.md at the plugin root") | not)] | length == 0' "$RUNNER_TEMP/validate.json" > /dev/null \
+            || { jq '.contents[] | select(.warnings | length > 0) | {file, warnings}' "$RUNNER_TEMP/validate.json"; exit 1; }
       - run: claude plugin test .

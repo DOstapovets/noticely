@@ -3,17 +3,26 @@
 How work on this plugin is branched, committed, versioned and proposed. Written
 for people and for coding agents.
 
-Four GitHub workflows back this up:
+Five GitHub workflows back this up:
 
 | Workflow | Runs on | Does |
 | --- | --- | --- |
-| `checks.yml` | every PR, every push to `main` | `claude plugin validate .` and `claude plugin test .` on the latest Claude Code |
+| `checks.yml` | every PR, every push to `main`, daily | `claude plugin validate .` and `claude plugin test .` on Claude Code `stable` and `latest`; a type error `validate` reports fails it |
+| `claude-code-releases.yml` | daily | reads the CHANGELOG of each Claude Code version published since its last run against the plugin, and opens `claude-code` issues: one per breaking change (also labeled `breaking`), one per run for what the plugin could use (`enhancement`) |
 | `commitlint.yml` | every PR, every push to `main` | lints each commit message (`commitlint.config.mjs`) |
 | `pr-title.yml` | PRs | requires the title to be a Conventional Commits subject |
 | `release-please.yml` | every push to `main` | opens or updates the release PR (see Versions) |
 
 None of them sees the pane, and the test kit does not draw it, so what a PR says
 about how a change looks is still only as good as what its author checked.
+
+A red daily `checks.yml` on an unchanged `main` means a Claude Code release broke
+the plugin; the `breaking` issue the same morning says which entry did.
+`claude-code-releases.yml` runs Claude with the repository's
+`CLAUDE_CODE_OAUTH_TOKEN` secret: make one with `claude setup-token`, then
+`gh secret set CLAUDE_CODE_OAUTH_TOKEN`. Without it the workflow stops at once. Its
+prompt is `.github/prompts/claude-code-releases.md`; to read older versions again,
+run it by hand with `since` set to the last version already read.
 
 ## Branches
 

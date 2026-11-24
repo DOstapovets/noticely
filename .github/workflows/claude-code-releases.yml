@@ -1,0 +1,108 @@
+name: Claude Code releases
+
+# Reads the CHANGELOG of each Claude Code version published since the last run that
+# went through, against the plugin's code, and opens issues: one per change that
+# breaks the plugin, one per run for what the plugin could use. The prompt is
+# .github/prompts/claude-code-releases.md. Needs the CLAUDE_CODE_OAUTH_TOKEN secret
+# (`claude setup-token`); without it the run stops at once.
+on:
+  schedule:
+    - cron: '47 6 * * *'
+  workflow_dispatch:
+    inputs:
+      since:
+        description: 'Read the versions published after this one (e.g. 2.1.325) instead of those since the last run'
+        required: false
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+jobs:
+  analyze:
+    name: Read new Claude Code releases
+    runs-on: ubuntu-latest
+    # Named, bash runs with pipefail: a failed check piped into tail is still seen.
+    defaults:
+      run:
+        shell: bash
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+    steps:
+      - name: Versions to read
+        id: window
+        env:
+          SINCE: ${{ inputs.since }}
+        run: |
+          if [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+            echo "::notice::No CLAUDE_CODE_OAUTH_TOKEN secret: nothing is read. Run \`claude setup-token\`, then \`gh secret set CLAUDE_CODE_OAUTH_TOKEN\`."
+            exit 0
+          fi
+          npm view @anthropic-ai/claude-code time --json > "$RUNNER_TEMP/time.json"
+          if [ -n "$SINCE" ]; then
+            cutoff=$(jq -r --arg v "$SINCE" '.[$v] // empty' "$RUNNER_TEMP/time.json")
+            [ -n "$cutoff" ] || { echo "::error::$SINCE is not a published version"; exit 1; }
+          else
+            # The run in progress is not a success yet, so this is the one before it.
+            cutoff=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow claude-code-releases.yml --status success -L 1 --json createdAt --jq '.[0].createdAt // empty')
+          fi
+          if [ -z "$cutoff" ]; then
+            versions=$(npm view @anthropic-ai/claude-code dist-tags.latest)
+          else
+            versions=$(jq -r --arg c "$cutoff" 'to_entries | map(select((.key | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) and .value > $c)) | sort_by(.value) | map(.key) | join(" ")' "$RUNNER_TEMP/time.json")
+          fi
+          echo "Versions: ${versions:-none}"
+          echo "versions=$versions" >> "$GITHUB_OUTPUT"
+
+      - if: steps.window.outputs.versions != ''
+        uses: actions/checkout@v7
+      - if: steps.window.outputs.versions != ''
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+
+      - name: The CHANGELOG sections, and the checks on the latest release
+        if: steps.window.outputs.versions != ''
+        id: inputs
+        env:
+          VERSIONS: ${{ steps.window.outputs.versions }}
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md -o "$RUNNER_TEMP/CHANGELOG.md"
+          for v in $VERSIONS; do
+            awk -v h="## $v" '$0 == h { p = 1; print; next } /^## / { p = 0 } p' "$RUNNER_TEMP/CHANGELOG.md"
+          done > "$RUNNER_TEMP/changes.md"
+          npm install --global @anthropic-ai/claude-code@latest
+          {
+            echo "## claude plugin validate . on Claude Code $(claude --version)"
+            claude plugin validate . 2>&1 | tail -n 200 || echo "FAILED: exit $?"
+            echo
+            echo "## claude plugin test ."
+            claude plugin test . 2>&1 | tail -n 200 || echo "FAILED: exit $?"
+          } > "$RUNNER_TEMP/checks.txt"
+          # validate reports type errors as warnings and still exits 0.
+          if grep -q 'FAILED: exit\|error TS[0-9]' "$RUNNER_TEMP/checks.txt"; then failed=true; else failed=false; fi
+          if [ -s "$RUNNER_TEMP/changes.md" ] || [ "$failed" = true ]; then
+            echo "read=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No CHANGELOG section for $VERSIONS, and the checks pass: nothing to read."
+          fi
+
+      - name: Analyze into issues
+        if: steps.inputs.outputs.read == 'true'
+        env:
+          VERSIONS: ${{ steps.window.outputs.versions }}
+        run: |
+          gh label create claude-code --color 5319e7 --description 'A change in Claude Code that concerns the plugin' --force
+          gh label create breaking --color b60205 --description 'Breaks the plugin' --force
+          prompt="$(cat .github/prompts/claude-code-releases.md)
+
+          Versions read: $VERSIONS
+          The CHANGELOG sections of those versions: $RUNNER_TEMP/changes.md
+          The checks on the latest release: $RUNNER_TEMP/checks.txt
+          Write issue bodies under: $RUNNER_TEMP"
+          claude -p "$prompt" \
+            --model sonnet \
+            --add-dir "$RUNNER_TEMP" \
+            --allowedTools "Read,Grep,Glob,Write,Bash(gh issue list:*),Bash(gh issue create:*)"

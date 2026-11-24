@@ -82,6 +82,13 @@ marketplace. In that case load the `plugin-authoring` skill, which writes
 `tsconfig.json` kept outside the repository at that file and at `hooks/` and
 `types/`; the header of the file lists the compiler options.
 
+`validate` type-checks the hooks module too, against the running engine's
+declarations, but reports each finding as a warning and still passes. CI fails on
+any warning but the one about `CLAUDE.md`, on Claude Code `stable` and `latest`,
+every day as well as on each push, so a release that changes the API turns `main`
+red. Issues labeled `claude-code` come from `claude-code-releases.yml`, which reads
+each release's CHANGELOG against the code: `breaking` ones first.
+
 Two hooks in `.claude/settings.json` enforce some of this for Claude Code sessions in
 the repository. The scripts are in `.claude/hooks/`:
 
