@@ -70,7 +70,8 @@ which pushes it down only once the list is longer than the pane.
 When a newer Noticely is out, **↑ 0.28.0** (its version) stands before **⚙ Settings**
 in the accent color, and a toast tells of it once per version. Pressing it updates the
 marketplace and the plugin (`claude plugin marketplace update noticely`, then
-`claude plugin update noticely@noticely`); `/reload-plugins` or a new session loads the
+`claude plugin update noticely@noticely`), and a toast names the version installed: main's
+latest, even one released after the offer. `/reload-plugins` or a new session loads the
 new version. See [Updates](../README.md#updates).
 
 ## Other projects

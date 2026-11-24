@@ -2148,14 +2148,17 @@ test('↑ updates the marketplace, then the plugin, and the footer lets it go', 
   expect(seen.toasts.at(-1)).toBe('Could not update Noticely: error: could not reach github.com')
   expect(await ui.find({ key: 'update' })).toBeDefined()
 
+  // A release lands between the offer and the press: the toast names what was installed.
   seen.updateFail = null
+  seen.main = '0.28.1'
   await ui.press({ key: 'update' })
   // Never with -y: that would accept a changed install command nobody looked at.
-  expect(seen.plugin.slice(-2)).toEqual([
+  expect(seen.plugin.slice(-3)).toEqual([
     ['claude', 'plugin', 'marketplace', 'update', 'noticely'],
     ['claude', 'plugin', 'update', 'noticely@noticely'],
+    ['claude', 'plugin', 'list', '--json'],
   ])
-  expect(seen.toasts.at(-1)).toBe('↑ Noticely 0.28.0 installed · /reload-plugins or a new session loads it')
+  expect(seen.toasts.at(-1)).toBe('↑ Noticely 0.28.1 installed · /reload-plugins or a new session loads it')
   expect(await ui.find({ key: 'update' })).toBeUndefined()
   await ui.unmount()
 })

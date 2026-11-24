@@ -41,6 +41,14 @@ export const newer = (a: string, b: string) => {
   return false
 }
 
+// The version `claude plugin list` reports for the marketplace's install, if there is one.
+async function installedVersion($: Api) {
+  const listed = await $.process.run(['claude', 'plugin', 'list', '--json']).catch(() => undefined)
+  const plugins = json(listed?.exitCode === 0 ? listed.stdout : '') as { id?: unknown; version?: unknown }[] | undefined
+  const installed = Array.isArray(plugins) ? plugins.find(p => p.id === PLUGIN)?.version : undefined
+  return typeof installed === 'string' ? installed : undefined
+}
+
 // Whether main holds a newer version than the one installed from the marketplace: if so the
 // pane's footer offers it, and a toast tells of it once.
 export async function checkUpdate($: Api) {
@@ -59,10 +67,8 @@ export async function checkUpdate($: Api) {
   }
 
   // None from the marketplace (a `--plugin-dir` checkout, a directory marketplace): nothing to update.
-  const listed = await $.process.run(['claude', 'plugin', 'list', '--json']).catch(() => undefined)
-  const plugins = json(listed?.exitCode === 0 ? listed.stdout : '') as { id?: unknown; version?: unknown }[] | undefined
-  const installed = Array.isArray(plugins) ? plugins.find(p => p.id === PLUGIN)?.version : undefined
-  if (typeof installed !== 'string') {
+  const installed = await installedVersion($)
+  if (!installed) {
     return
   }
 
@@ -113,7 +119,9 @@ export async function installUpdate($: Api) {
     }
 
     await update($, latest, () => null)
-    await $.ui.toast(`↑ Noticely ${version} installed · /reload-plugins or a new session loads it`)
+    // `plugin update` installs what main holds now, which can be past the version offered.
+    const installed = (await installedVersion($)) ?? version
+    await $.ui.toast(`↑ Noticely ${installed} installed · /reload-plugins or a new session loads it`)
   } finally {
     updating = false
   }
