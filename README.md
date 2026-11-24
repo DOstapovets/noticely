@@ -42,10 +42,10 @@ Call `resolve_issue` once such an issue is fixed.
 ## Updates
 
 Claude Code does not update a plugin from a marketplace like this one by itself, and
-the desktop app has no button for it. So Noticely checks once a session: when a newer
-version is out, a toast says so once, and **↑ 0.28.0** in the pane's footer installs
-it, in the terminal, VS Code and the desktop app alike. `/reload-plugins` or a new
-session loads it. The check is off where `DISABLE_UPDATES`, `DISABLE_AUTOUPDATER` or
+the desktop app has no button for it. So Noticely checks as a session starts and
+every hour after: when a newer version is out, a toast says so once, and **↑ 0.28.0**
+in the pane's footer installs it, in the terminal, VS Code and the desktop app alike.
+`/reload-plugins` or a new session loads it. The check is off where `DISABLE_UPDATES`, `DISABLE_AUTOUPDATER` or
 `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` is set.
 
 To have Claude Code update it on its own instead, turn auto-update on for the

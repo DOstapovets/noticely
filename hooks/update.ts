@@ -68,7 +68,12 @@ export async function checkUpdate($: Api) {
 
   const fetched = await $.http.fetch(MANIFEST).catch(() => undefined)
   const out = (json(fetched?.ok ? fetched.text : '') as { version?: unknown } | undefined)?.version
-  if (typeof out !== 'string' || !newer(out, installed)) {
+  if (typeof out !== 'string') {
+    return
+  }
+  // Installed meanwhile, from another session or the terminal: the offer goes.
+  if (!newer(out, installed)) {
+    if (await read($, latest)) await update($, latest, () => null)
     return
   }
 

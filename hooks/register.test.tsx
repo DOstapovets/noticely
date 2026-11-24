@@ -2062,6 +2062,28 @@ test('a newer version on main is told of once and offered in the footer, on ever
   await again.unmount()
 })
 
+test('the offer follows main and the version installed while the session runs, checked every hour', async ($, on) => {
+  const seen = engine(on)
+  seen.installed = '0.27.0'
+  seen.main = '0.28.0'
+  await $.session.start(start('/proj/a'))
+  await seen.clock.settle()
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  expect((await ui.find({ key: 'update' }))?.text).toBe(' ↑ 0.28.0 ')
+
+  // A release while the session runs: offered, and told of, within the hour.
+  seen.main = '0.28.1'
+  await seen.clock.advance(60 * 60_000)
+  expect((await ui.find({ key: 'update' }))?.text).toBe(' ↑ 0.28.1 ')
+  expect(seen.toasts.filter(told).at(-1)).toBe('⚑ Noticely 0.28.1 is out (you have 0.27.0) · ↑ 0.28.1 in /noticely installs it')
+
+  // Installed from another session or the terminal: the offer goes.
+  seen.installed = '0.28.1'
+  await seen.clock.advance(60 * 60_000)
+  expect(await ui.find({ key: 'update' })).toBeUndefined()
+  await ui.unmount()
+})
+
 test('nothing is offered when the version is current, not from the marketplace, or updates are off', async ($, on) => {
   const seen = engine(on)
   const offered = async () => {

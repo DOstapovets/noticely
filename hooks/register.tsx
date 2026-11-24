@@ -22,6 +22,8 @@ const RULE_LIMIT = 4000
 // Another session of this project (a background one started from the pane)
 // may resolve issues; pick its changes up this often.
 const RELOAD_MS = 30_000
+// A session outlives releases: main, and the version installed, are asked again this often.
+const UPDATE_CHECK_MS = 60 * 60_000
 
 // The priority groups folded in the pane, the same in every project.
 const collapsed = atom({ plugin: 'noticely', key: 'collapsed' } as const, [])
@@ -160,6 +162,7 @@ export const register: Register = (on, options) => {
     // Not in background sessions: nobody would see the offer there.
     if (e.isInteractive) {
       void checkUpdate($)
+      $.clock.every(UPDATE_CHECK_MS, () => void checkUpdate($))
     }
 
     if (list.length > 0) {
